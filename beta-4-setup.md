@@ -394,11 +394,11 @@ update".
     rm /etc/sysconfig/docker*
     yum -y install docker
 
-### Clone the Training Repository
-On your master, it makes sense to clone the training git repository:
+### Clone the openshiftv3-training Repository
+On ose-master, clone the training git repository:
 
     cd
-    git clone https://github.com/openshift/training.git
+    git clone https://github.com/GSS-Training-RedHat/openshiftv3-training.git
 
 **REMINDER**
 Almost all of the files for this training are in the training folder you just
@@ -408,13 +408,13 @@ cloned.
 In the "real world" your developers would likely be using the OpenShift tools on
 their own machines (`osc` and the web console). For the Beta training, we
 will create user accounts for two non-privileged users of OpenShift, *joe* and
-*alice*, on the master. This is done for convenience and because we'll be using
+*alice*, on ose-master. This is done for convenience and because we'll be using
 `htpasswd` for authentication.
 
     useradd joe
     useradd alice
 
-We will come back to these users later. Remember to do this on the `master`
+We will come back to these users later. Remember to do this on the `ose-master`
 system, and not the nodes.
 
 ## Ansible-based Installer
@@ -440,7 +440,7 @@ Install the packages for Ansible:
 
 ### Generate SSH Keys
 Because of the way Ansible works, SSH key distribution is required. First,
-generate an SSH key on your master, where we will run Ansible:
+generate an SSH key on ose-master, where we will run Ansible:
 
     ssh-keygen
 
@@ -449,8 +449,8 @@ Do *not* use a password.
 ### Distribute SSH Keys
 An easy way to distribute your SSH keys is by using a `bash` loop:
 
-    for host in ose3-master.example.com ose3-node1.example.com \
-    ose3-node2.example.com; do ssh-copy-id -i ~/.ssh/id_rsa.pub \
+    for host in ose-master.paas.it ose-node1.paas.it \
+    ose-node2.paas.it; do ssh-copy-id -i ~/.ssh/id_rsa.pub \
     $host; done
 
 Remember, if your FQDNs are different, you would have to modify the loop
@@ -467,11 +467,21 @@ Github. Clone the repository:
 ### Configure Ansible
 Copy the staged Ansible configuration files to `/etc/ansible`:
 
-    /bin/cp -r ~/training/beta4/ansible/* /etc/ansible/
+    /bin/cp -r ~/openshiftv3-training/beta4/ansible/* /etc/ansible/
 
 ### Modify Hosts
-If you are not using the "example.com" domain and the training example
-hostnames, modify `/etc/ansible/hosts` accordingly. 
+Modify these sections in `/etc/ansible/hosts` to match the machines in the learning environment:
+```
+# host group for masters
+[masters]
+ose-master.paas.it
+
+# host group for nodes, includes region info
+[nodes]
+ose-master.paas.it openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+ose-node1.paas.it openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+ose-node2.paas.it openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
+```
 
 Also, if you are using multiple NICs and will be trying to direct various
 traffic to different places, you will need to take a look at [Generic Cloud
@@ -483,12 +493,11 @@ Now we can simply run the Ansible installer:
 
     ansible-playbook ~/openshift-ansible/playbooks/byo/config.yml
 
-If you looked at the Ansible hosts file, note that our master
-(ose3-master.example.com) was present in both the `master` and the `node`
+Looking at the Ansible hosts file, note that our master
+(ose-master.paas.it) was present in both the `master` and the `node`
 section.
 
-Effectively, Ansible is going to install and configure node software on all the
-nodes and master software just on `ose3-master.example.com` .
+Effectively, Ansible is going to install and configure node software on `ose-master`, `ose-node1`, and `ose-node2`, but master software just on `ose-master`.
 
 There was also some information about "regions" and "zones" in the hosts file.
 Let's talk about those concepts now.
@@ -1012,8 +1021,8 @@ Issue a `get pods` to see the details of how it was defined:
 
     osc get pods
     POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose3-node1.example.com/192.168.133.3   name=hello-openshift   Running   16 seconds   
-                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   2 seconds   
+    hello-openshift   10.1.1.2                                                        ose3-node1.example.com/192.168.133.3   name=hello-openshift   Running   16 seconds
+                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   2 seconds
 
 The output of this command shows all of the Docker containers in a pod, which
 explains some of the spacing.
@@ -1084,7 +1093,7 @@ fourth, because the quota on this project limits us to three total pods.
 
 As `joe`, go ahead and use `osc create` and you will see the following:
 
-    osc create -f hello-quota.json 
+    osc create -f hello-quota.json
     pods/hello-openshift-1
     pods/hello-openshift-2
     pods/hello-openshift-3
@@ -1274,13 +1283,13 @@ did not run this command in the folder where you created it.
 
 Let's check the pods:
 
-    osc get pods 
+    osc get pods
 
 In the output, you should see the router pod status change to "running" after a
 few moments (it may take up to a few minutes):
 
     POD              IP         CONTAINER(S)   IMAGE(S)                                                                 HOST                                    LABELS                                                      STATUS    CREATED      MESSAGE
-    router-1-cutck   10.1.0.4                                                                                           ose3-master.example.com/192.168.133.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes   
+    router-1-cutck   10.1.0.4                                                                                           ose3-master.example.com/192.168.133.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes
                                 router         registry.access.redhat.com/openshift3_beta/ose-haproxy-router:v0.5.2.2                                                                                                       Running   18 minutes
 
 Note: This output is huge, wide, and ugly. We're working on making it nicer. You
@@ -1333,7 +1342,7 @@ admins.
 
 Ensure that port 1936 is accessible and visit:
 
-    http://admin:cEVu2hUb@ose3-master.example.com:1936 
+    http://admin:cEVu2hUb@ose3-master.example.com:1936
 
 to view your router stats.
 
@@ -1507,7 +1516,7 @@ common resources existing in the current project:
 
     osc status
     In project OpenShift 3 Demo (demo)
-    
+
     service hello-openshift-service (172.30.197.132:27017 -> 8080)
       hello-openshift deploys docker.io/openshift/hello-openshift:v0.4.3
         #1 deployed 3 minutes ago - 1 pod
@@ -1653,8 +1662,8 @@ pods` and so forth should show her the same thing as `joe`:
 
     [alice]$ osc get pods
     POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose3-node1.example.com/192.168.133.3   name=hello-openshift   Running   14 minutes   
-                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   14 minutes   
+    hello-openshift   10.1.1.2                                                        ose3-node1.example.com/192.168.133.3   name=hello-openshift   Running   14 minutes
+                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   14 minutes
 
 However, she cannot make changes:
 
@@ -1854,7 +1863,7 @@ As the `joe` user, we will create a new project to put our first S2I example
 into:
 
     osc new-project sinatra --display-name="Sinatra Example" \
-    --description="This is your first build on OpenShift 3" 
+    --description="This is your first build on OpenShift 3"
 
 Logged in as `joe` in the web console, if you click the OpenShift image you
 should be returned to the project overview page where you will see the new
@@ -2693,7 +2702,7 @@ this volume should be mounted where the database will use it. As `alice`:
     $ osc edit dc/database
 
 The part we will need to edit is the pod template. We will need to add two
-parts: 
+parts:
 
 * a definition of the volume
 * where to mount it inside the container
@@ -3036,7 +3045,7 @@ run inside of your builder pod. That's what you see by using `build-logs` - the
 output of the assemble script. The
 `run` script actually is what is executed to "start" your application's pod. In
 other words, the `run` script is what starts the Ruby process for an image that
-was built based on the `ruby-20-rhel7` S2I builder. 
+was built based on the `ruby-20-rhel7` S2I builder.
 
 To look inside the builder pod, as `alice`:
 
@@ -3263,13 +3272,13 @@ About a minute after the build completes, you should see something like the foll
 of `osc get pod` as `alice`:
 
     POD                                IP          CONTAINER(S)               IMAGE(S)                                                                                                                HOST                                    LABELS                                                                                                                  STATUS       CREATED         MESSAGE
-    database-2-rj72q                   10.1.0.15                                                                                                                                                      ose3-master.example.com/192.168.133.2   deployment=database-2,deploymentconfig=database,name=database                                                           Running      About an hour   
-                                                   ruby-helloworld-database   registry.access.redhat.com/openshift3_beta/mysql-55-rhel7                                                                                                                                                                                                                               Running      About an hour   
-    deployment-frontend-7-hook-4i8ch                                                                                                                                                                  ose3-node1.example.com/192.168.133.3    <none>                                                                                                                  Succeeded    41 seconds      
+    database-2-rj72q                   10.1.0.15                                                                                                                                                      ose3-master.example.com/192.168.133.2   deployment=database-2,deploymentconfig=database,name=database                                                           Running      About an hour
+                                                   ruby-helloworld-database   registry.access.redhat.com/openshift3_beta/mysql-55-rhel7                                                                                                                                                                                                                               Running      About an hour
+    deployment-frontend-7-hook-4i8ch                                                                                                                                                                  ose3-node1.example.com/192.168.133.3    <none>                                                                                                                  Succeeded    41 seconds
                                                    lifecycle                  172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Terminated   36 seconds      exit code 0
-    frontend-7-nnnxz                   10.1.1.24                                                                                                                                                      ose3-node1.example.com/192.168.133.3    deployment=frontend-7,deploymentconfig=frontend,name=frontend                                                           Running      29 seconds      
-                                                   ruby-helloworld            172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Running      26 seconds      
-    ruby-sample-build-7-build                                                                                                                                                                         ose3-master.example.com/192.168.133.2   build=ruby-sample-build-7,buildconfig=ruby-sample-build,name=ruby-sample-build,template=application-template-stibuild   Succeeded    2 minutes       
+    frontend-7-nnnxz                   10.1.1.24                                                                                                                                                      ose3-node1.example.com/192.168.133.3    deployment=frontend-7,deploymentconfig=frontend,name=frontend                                                           Running      29 seconds
+                                                   ruby-helloworld            172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Running      26 seconds
+    ruby-sample-build-7-build                                                                                                                                                                         ose3-master.example.com/192.168.133.2   build=ruby-sample-build-7,buildconfig=ruby-sample-build,name=ruby-sample-build,template=application-template-stibuild   Succeeded    2 minutes
                                                    sti-build                  openshift3_beta/ose-sti-builder:v0.5.2.2                                                                                                                                                                                                                                                Terminated   2 minutes       exit code 0
 
 Yes, it's ugly, thanks for reminding us.
