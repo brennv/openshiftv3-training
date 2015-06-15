@@ -23,7 +23,7 @@ You will learn much more about the inner workings of OpenShift throughout the
 rest of the training.
 
 ### Hardware
-The *ose-master*, *ose-node1* and *ose-node2* each have 4+ GB of memory, and 20 GB of local hard disk space.
+The *ose-master*, *ose-node1* and *ose-node2* each have 4+ GB of memory, and 20 GB of local hard disk space.  Each VM is configured to use a single core vCPU with one vNIC.
 
 
 ### Software
@@ -34,10 +34,10 @@ The following software has been installed:
 * "Minimal" installation option
 * openshift-0.5.2.2-0
 * docker-1.6.2-6
-* git
 * openvswitch-2.3.1-2
+* git
 
-**NOTE: No machine in this environment is running a desktop (GNOME).  When you need to access 
+**NOTE: No machine in this environment is running a desktop (GNOME).
 
 ### Storage
 
@@ -62,11 +62,6 @@ Filesystem                         Size  Used Avail Use% Mounted on
 /dev/mapper/rhel_ose--master-root  8.5G  1.5G  7.0G  18% /
 ```
 
-As part of signing up for the beta program, you should have received an
-evaluation subscription. This subscription gave you access to the beta software.
-You will need to use subscription manager to both register your VMs, and attach
-them to the *OpenShift Enterprise High Touch Beta* subscription.
-
 ### Network
 All of your VMs should be on the same logical network and be able to access one
 another.
@@ -78,37 +73,48 @@ FQDN | Static IP
 ose-workstation.paas.it | 192.168.100.5 
 ose-master.paas.it | 192.168.100.2 
 ose-node1.paas.it | 192.168.100.3 
-ose-node2.paas.it | 192.168.100.4 
+ose-node2.paas.it | 192.168.100.4
 
-### Using a Browser in the Learning Environment
+### Using your Browser in the Learning Environment
 
-There are parts of the training that will require a web browser.  Instead of installing a desktop in the learning environment or X11 forwarding, establish a SOCKS proxy using ssh and ose-workstation.  Here are steps:
+There are parts of the training that will require a web browser.  Instead of installing a desktop in the learning environment or using X11 forwarding, establish a SOCKS proxy using ssh and ose-workstation.  Here are the steps:
 
-1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:
-```
+1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:```
 $ ssh -p 10006 root@oseworkstation-kablumopenshifttra-r6fxqfbf.srv.ravcloud.com -D 12345
-```
-**NOTE**: Leave this connection open while you are using your workstation's local firefox/chrome browser.
+```**NOTE**: Leave this connection open while you are using your workstation's local firefox browser.
 
 2. Open a new private window in firefox on your local workstation
 
-3. In the private window modify firefox settings:  preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: localhost and Port: 12345 > make sure SOCKSv5 and Remote DNS are checked.
-
-**NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
+3. In the private window modify firefox settings:  preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: localhost and Port: 12345 > make sure SOCKSv5 and Remote DNS are checked.  **NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
 
 4. When you are done, make sure to restore your browser's configuration
 
-Chrome settings (unverified)
-
-http://www.adamburvill.com/2014/03/ssh-socks-tunnelling-and-avoiding-dns.html
+Chrome settings (unverified from http://www.adamburvill.com/2014/03/ssh-socks-tunnelling-and-avoiding-dns.html)
 
  Chrome doesn't use it's own settings for SOCKS proxy but rather uses the OS settings.  To set it up, type chrome://settings in the address bar and click Show Advanced Settings at the bottom:
  Then click Change Proxy Settings > select a protocol to configure > check SOCKS Proxy > put in localhost 12345 > click OK and then Apply - chrome doesn't need extra dns configuration.
 
-## Setting Up the Environment
-### Use a Terminal Window Manager
-We **strongly** recommend that you use some kind of terminal window manager
-(Screen, Tmux).
+### Container Images
+Each of the machines running the docker service have several images pulled to speed up the learning activities detailed later.
+
+Here is a listing of these images:
+```
+REPOSITORY                                                             TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+registry.access.redhat.com/openshift3_beta/ose-haproxy-router          v0.5.2.2            9acca190de9e        12 days ago         301.6 MB
+registry.access.redhat.com/openshift3_beta/mysql-55-rhel7              latest              f36a8422c16f        13 days ago         315.5 MB
+registry.access.redhat.com/openshift3_beta/ruby-20-rhel7               latest              a3dab3cfce6a        13 days ago         406.7 MB
+registry.access.redhat.com/jboss-eap-6/eap-openshift                   latest              68a4c66fa980        2 weeks ago         955.9 MB
+registry.access.redhat.com/openshift3_beta/ose-keepalived-ipfailover   v0.5.2.2            30bfc921c977        2 weeks ago         256.6 MB
+registry.access.redhat.com/openshift3_beta/ose-docker-registry         v0.5.2.2            b27c54b9ad41        2 weeks ago         305.1 MB
+registry.access.redhat.com/openshift3_beta/ose-pod                     v0.5.2.2            8f7b5892c1c3        2 weeks ago         155.9 MB
+registry.access.redhat.com/openshift3_beta/ose-sti-image-builder       v0.5.2.2            ad33ee97468d        2 weeks ago         445.4 MB
+registry.access.redhat.com/openshift3_beta/ose-sti-builder             v0.5.2.2            63a3596cbba6        2 weeks ago         289.1 MB
+registry.access.redhat.com/openshift3_beta/ose-docker-builder          v0.5.2.2            7bbe7d393a79        2 weeks ago         289.1 MB
+registry.access.redhat.com/openshift3_beta/ose-deployer                v0.5.2.2            9d1f1b2dd90d        2 weeks ago         289.1 MB
+registry.access.redhat.com/openshift3_beta/sti-basicauthurl            latest              364ffcde5a9f        8 weeks ago         219.5 MB
+docker.io/openshift/hello-openshift                                    v0.4.3              4dc8820c2f2c        9 weeks ago         5.62 MB
+```
+
 
 ### DNS
 You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP
@@ -125,150 +131,7 @@ It is possible to use dnsmasq inside of your beta environment to handle these
 duties. See the [appendix on dnsmasq](#appendix---dnsmasq-setup) if you can't
 easily manipulate your existing DNS environment.
 
-### Assumptions
-In most cases you will see references to "example.com" and other FQDNs related
-to it. If you choose not to use "example.com" in your configuration, that is
-fine, but remember that you will have to adjust files and actions accordingly.
 
-### Git
-You will either need internet access or read and write access to an internal
-http-based git server where you will duplicate the public code repositories used
-in the labs.
-
-### Preparing Each VM
-Once your VMs are built and you have verified DNS and network connectivity you
-can:
-
-* Configure yum / subscription manager as follows:
-
-        subscription-manager repos --disable="*"
-        subscription-manager repos \
-        --enable="rhel-7-server-rpms" \
-        --enable="rhel-7-server-extras-rpms" \
-        --enable="rhel-7-server-optional-rpms" \
-        --enable="rhel-server-7-ose-beta-rpms"
-
-    **Note:** You will have had to register/attach your system first.  Also,
-    *rhel-server-7-ose-beta-rpms* is not a typo.  The name will change at GA to be
-    consistent with the RHEL channel names.
-
-* Import the GPG key for beta:
-
-        rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta
-
-Onn **each** VM:
-
-1. Install deltarpm to make package updates a little faster:
-
-        yum -y install deltarpm
-
-1. Install missing packages:
-
-        yum -y install wget vim-enhanced net-tools bind-utils tmux git
-
-1. Update:
-
-        yum -y update
-
-### Docker Storage Setup (optional, recommended)
-**IMPORTANT:** The default docker storage configuration uses loopback devices
-and is not appropriate for production. Red Hat considers the dm.thinpooldev
-storage option to be the only appropriate configuration for production use.
-
-If you want to configure the storage for Docker, you'll need to first install
-Docker, as the installer currently does not auto-configure this storage setup
-for you.
-
-    yum -y install docker
-
-Make sure that you are running at least `docker-1.6.2-6.el7.x86_64`.
-
-In order to use dm.thinpooldev you must have an LVM thinpool available, the
-`docker-storage-setup` package will assist you in configuring LVM. However you
-must provision your host to fit one of these three scenarios :
-
-*  Root filesystem on LVM with free space remaining on the volume group. Run
-`docker-storage-setup` with no additional configuration, it will allocate the
-remaining space for the thinpool.
-
-*  A dedicated LVM volume group where you'd like to reate your thinpool
-
-        echo <<EOF > /etc/sysconfig/docker-storage-setup
-        VG=docker-vg
-        SETUP_LVM_THIN_POOL=yes
-        EOF
-        docker-storage-setup
-
-*  A dedicated block device, which will be used to create a volume group and thinpool
-
-        cat <<EOF > /etc/sysconfig/docker-storage-setup
-        DEVS=/dev/vdc
-        VG=docker-vg
-        SETUP_LVM_THIN_POOL=yes
-        EOF
-        docker-storage-setup
-
-Once complete you should have a thinpool named `docker-pool` and docker should
-be configured to use it in `/etc/sysconfig/docker-storage`.
-
-    # lvs
-    LV                  VG        Attr       LSize  Pool Origin Data%  Meta% Move Log Cpy%Sync Convert
-    docker-pool         docker-vg twi-a-tz-- 48.95g             0.00   0.44
-
-    # cat /etc/sysconfig/docker-storage
-    DOCKER_STORAGE_OPTIONS=--storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/openshift--vg-docker--pool
-
-**Note:** If you had previously used docker with loopback storage you should
-clean out `/var/lib/docker` This is a destructive operation and will delete all
-images and containers on the host.
-
-    systemctl stop docker
-    rm -rf /var/lib/docker/*
-    systemctl start docker
-
-### Grab Docker Images (Optional, Recommended)
-**If you want** to pre-fetch Docker images to make the first few things in your
-environment happen **faster**, you'll need to first install Docker if you didn't
-install it when (optionally) configuring the Docker storage previously.
-
-    yum -y install docker
-
-Make sure that you are running at least `docker-1.6.2-6.el7.x86_64`.
-
-You'll need to add `--insecure-registry 0.0.0.0/0` to your
-`/etc/sysconfig/docker` `OPTIONS`. Then:
-
-    systemctl start docker
-
-On all of your systems, grab the following docker images:
-
-    docker pull registry.access.redhat.com/openshift3_beta/ose-haproxy-router:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-deployer:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-sti-builder:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-sti-image-builder:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-docker-builder:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-pod:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-docker-registry:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/sti-basicauthurl:latest
-    docker pull registry.access.redhat.com/openshift3_beta/ose-keepalived-ipfailover:v0.5.2.2
-
-It may be advisable to pull the following Docker images as well, since they are
-used during the various labs:
-
-    docker pull registry.access.redhat.com/openshift3_beta/ruby-20-rhel7
-    docker pull registry.access.redhat.com/openshift3_beta/mysql-55-rhel7
-    docker pull registry.access.redhat.com/jboss-eap-6/eap-openshift
-    docker pull openshift/hello-openshift:v0.4.3
-
-**Note:** If you built your VM for a previous beta version and at some point
-used an older version of Docker, you need to *reinstall* or *remove+install*
-Docker after removing `/etc/sysconfig/docker`. The options in the config file
-changed and RPM will not overwrite your existing file if you just do a "yum
-update".
-
-    yum -y remove docker
-    rm /etc/sysconfig/docker*
-    yum -y install docker
 
 ### Clone the openshiftv3-training Repository
 On ose-master, clone the training git repository:
