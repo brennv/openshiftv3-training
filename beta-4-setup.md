@@ -1,233 +1,109 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [OpenShift Beta 4](#openshift-beta-4)
-  - [Architecture and Requirements](#architecture-and-requirements)
-    - [Architecture](#architecture)
-    - [Requirements](#requirements)
-  - [Setting Up the Environment](#setting-up-the-environment)
-    - [Use a Terminal Window Manager](#use-a-terminal-window-manager)
-    - [DNS](#dns)
-    - [Assumptions](#assumptions)
-    - [Git](#git)
-    - [Preparing Each VM](#preparing-each-vm)
-    - [Docker Storage Setup (optional, recommended)](#docker-storage-setup-optional-recommended)
-    - [Grab Docker Images (Optional, Recommended)](#grab-docker-images-optional-recommended)
-    - [Clone the Training Repository](#clone-the-training-repository)
-    - [Add Development Users](#add-development-users)
-  - [Ansible-based Installer](#ansible-based-installer)
-    - [Install Ansible](#install-ansible)
-    - [Generate SSH Keys](#generate-ssh-keys)
-    - [Distribute SSH Keys](#distribute-ssh-keys)
-    - [Clone the Ansible Repository](#clone-the-ansible-repository)
-    - [Configure Ansible](#configure-ansible)
-    - [Modify Hosts](#modify-hosts)
-    - [Run the Ansible Installer](#run-the-ansible-installer)
-  - [Regions and Zones](#regions-and-zones)
-    - [Scheduler and Defaults](#scheduler-and-defaults)
-    - [The NodeSelector](#the-nodeselector)
-    - [Customizing the Scheduler Configuration](#customizing-the-scheduler-configuration)
-    - [Node Labels](#node-labels)
-  - [Useful OpenShift Logs](#useful-openshift-logs)
-  - [Auth, Projects, and the Web Console](#auth-projects-and-the-web-console)
-    - [Configuring htpasswd Authentication](#configuring-htpasswd-authentication)
-    - [A Project for Everything](#a-project-for-everything)
-    - [Web Console](#web-console)
-  - [Your First Application](#your-first-application)
-    - [Resources](#resources)
-    - [Applying Quota to Projects](#applying-quota-to-projects)
-    - [Applying Limit Ranges to Projects](#applying-limit-ranges-to-projects)
-    - [Login](#login)
-    - [Grab the Training Repo Again](#grab-the-training-repo-again)
-    - [The Hello World Definition JSON](#the-hello-world-definition-json)
-    - [Run the Pod](#run-the-pod)
-    - [Looking at the Pod in the Web Console](#looking-at-the-pod-in-the-web-console)
-    - [Quota Usage](#quota-usage)
-    - [Extra Credit](#extra-credit)
-    - [Delete the Pod](#delete-the-pod)
-    - [Quota Enforcement](#quota-enforcement)
-  - [Services](#services)
-  - [Routing](#routing)
-    - [Creating a Wildcard Certificate](#creating-a-wildcard-certificate)
-    - [Creating the Router](#creating-the-router)
-    - [Router Placement By Region](#router-placement-by-region)
-    - [Viewing Router Stats](#viewing-router-stats)
-  - [The Complete Pod-Service-Route](#the-complete-pod-service-route)
-    - [Creating the Definition](#creating-the-definition)
-    - [Project Status](#project-status)
-    - [Verifying the Service](#verifying-the-service)
-    - [Verifying the Routing](#verifying-the-routing)
-    - [The Web Console](#the-web-console)
-  - [Project Administration](#project-administration)
-    - [Deleting a Project](#deleting-a-project)
-  - [Preparing for S2I: the Registry](#preparing-for-s2i-the-registry)
-    - [Storage for the registry](#storage-for-the-registry)
-    - [Creating the registry](#creating-the-registry)
-  - [S2I - What Is It?](#s2i---what-is-it)
-    - [Create a New Project](#create-a-new-project)
-    - [Switch Projects](#switch-projects)
-    - [A Simple Code Example](#a-simple-code-example)
-    - [CLI versus Console](#cli-versus-console)
-    - [Adding the Builder ImageStreams](#adding-the-builder-imagestreams)
-    - [Wait, What's an ImageStream?](#wait-whats-an-imagestream)
-    - [Adding Code Via the Web Console](#adding-code-via-the-web-console)
-    - [The Web Console Revisited](#the-web-console-revisited)
-    - [Examining the Build](#examining-the-build)
-    - [Testing the Application](#testing-the-application)
-    - [Adding a Route to Our Application](#adding-a-route-to-our-application)
-    - [Implications of Quota Enforcement on Scaling](#implications-of-quota-enforcement-on-scaling)
-  - [Templates, Instant Apps, and "Quickstarts"](#templates-instant-apps-and-quickstarts)
-    - [A Project for the Quickstart](#a-project-for-the-quickstart)
-    - [A Quick Aside on Templates](#a-quick-aside-on-templates)
-    - [Adding the Template](#adding-the-template)
-    - [Create an Instance of the Template](#create-an-instance-of-the-template)
-    - [Using Your App](#using-your-app)
-  - [Creating and Wiring Disparate Components](#creating-and-wiring-disparate-components)
-    - [Create a New Project](#create-a-new-project-1)
-    - [Stand Up the Frontend](#stand-up-the-frontend)
-    - [Visit Your Application](#visit-your-application)
-    - [Create the Database Config](#create-the-database-config)
-    - [Visit Your Application Again](#visit-your-application-again)
-    - [Replication Controllers](#replication-controllers)
-    - [Revisit the Webpage](#revisit-the-webpage)
-  - [Using Persistent Storage (Optional)](#using-persistent-storage-optional)
-    - [Export an NFS Volume](#export-an-nfs-volume)
-    - [NFS Firewall](#nfs-firewall)
-    - [Allow NFS Access in SELinux Policy](#allow-nfs-access-in-selinux-policy)
-    - [Create a PersistentVolume](#create-a-persistentvolume)
-    - [Claim the PersistentVolume](#claim-the-persistentvolume)
-    - [Use the Claimed Volume](#use-the-claimed-volume)
-    - [Restart the Frontend](#restart-the-frontend)
-  - [Rollback/Activate and Code Lifecycle](#rollbackactivate-and-code-lifecycle)
-    - [Fork the Repository](#fork-the-repository)
-    - [Update the BuildConfig](#update-the-buildconfig)
-    - [Change the Code](#change-the-code)
-- [ Welcome to an OpenShift v3 Demo App! ](#welcome-to-an-openshift-v3-demo-app)
-- [ This is my crustom demo! ](#this-is-my-crustom-demo)
-    - [Start a Build with a Webhook](#start-a-build-with-a-webhook)
-    - [Rollback](#rollback)
-    - [Activate](#activate)
-  - [Customized Build and Run Processes](#customized-build-and-run-processes)
-    - [Add a Script](#add-a-script)
-    - [Kick Off a Build](#kick-off-a-build)
-    - [Watch the Build Logs](#watch-the-build-logs)
-  - [Lifecycle Pre and Post Deployment Hooks](#lifecycle-pre-and-post-deployment-hooks)
-    - [Examining Deployment Hooks](#examining-deployment-hooks)
-    - [Modifying the Hooks](#modifying-the-hooks)
-    - [Quickly Clean Up](#quickly-clean-up)
-    - [Build Again](#build-again)
-    - [Verify the Migration](#verify-the-migration)
-  - [Arbitrary Docker Image (Builder)](#arbitrary-docker-image-builder)
-    - [Create a Project](#create-a-project)
-    - [Build Wordpress](#build-wordpress)
-    - [Test Your Application](#test-your-application)
-    - [Application Resource Labels](#application-resource-labels)
-  - [EAP Example](#eap-example)
-    - [Create a Project](#create-a-project-1)
-    - [Instantiate the Template](#instantiate-the-template)
-    - [Update the BuildConfig](#update-the-buildconfig-1)
-    - [Watch the Build](#watch-the-build)
-    - [Visit Your Application](#visit-your-application-1)
-  - [Conclusion](#conclusion)
-- [APPENDIX - DNSMasq setup](#appendix---dnsmasq-setup)
-    - [Verifying DNSMasq](#verifying-dnsmasq)
-- [APPENDIX - LDAP Authentication](#appendix---ldap-authentication)
-    - [Prerequirements:](#prerequirements)
-    - [Setting up an example LDAP server:](#setting-up-an-example-ldap-server)
-    - [Creating the Basic Auth service](#creating-the-basic-auth-service)
-    - [Using an LDAP server external to OpenShift](#using-an-ldap-server-external-to-openshift)
-    - [Upcoming changes](#upcoming-changes)
-- [APPENDIX - Import/Export of Docker Images (Disconnected Use)](#appendix---importexport-of-docker-images-disconnected-use)
-- [APPENDIX - Cleaning Up](#appendix---cleaning-up)
-- [APPENDIX - Pretty Output](#appendix---pretty-output)
-- [APPENDIX - Troubleshooting](#appendix---troubleshooting)
-- [APPENDIX - Infrastructure Log Aggregation](#appendix---infrastructure-log-aggregation)
-  - [Enable Remote Logging on Master](#enable-remote-logging-on-master)
-  - [Enable logging to /var/log/openshift](#enable-logging-to-varlogopenshift)
-  - [Configure nodes to send openshift logs to your master](#configure-nodes-to-send-openshift-logs-to-your-master)
-  - [Optionally Log Each Node to a unique directory](#optionally-log-each-node-to-a-unique-directory)
-- [APPENDIX - JBoss Tools for Eclipse](#appendix---jboss-tools-for-eclipse)
-  - [Installation](#installation)
-  - [Connecting to the Server](#connecting-to-the-server)
-- [APPENDIX - Working with HTTP Proxies](#appendix---working-with-http-proxies)
-  - [Importing ImageStreams](#importing-imagestreams)
-  - [S2I Builds](#s2i-builds)
-  - [Setting Environment Variables in Pods](#setting-environment-variables-in-pods)
-  - [Git Repository Access](#git-repository-access)
-  - [Proxying Docker Pull](#proxying-docker-pull)
-  - [Future Considerations](#future-considerations)
-- [APPENDIX - Installing in IaaS Clouds](#appendix---installing-in-iaas-clouds)
-  - [Generic Cloud Install](#generic-cloud-install)
-  - [Automated AWS Install With Ansible](#automated-aws-install-with-ansible)
-- [APPENDIX - Linux, Mac, and Windows clients](#appendix---linux-mac-and-windows-clients)
-  - [Downloading The Clients](#downloading-the-clients)
-  - [Log In To Your OpenShift Environment](#log-in-to-your-openshift-environment)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # OpenShift Beta 4
-## Architecture and Requirements
-### Architecture
-The documented architecture for the beta testing is pretty simple. There are
-three systems:
+## Learning Environment
+### Launching the Environment
+This training will use a ravello-based cloud environment.  To manage this environment you will use a CLI called `ravshello`.  See [this Red Hat internal link](https://mojo.redhat.com/docs/DOC-987131) for more information about `ravshello`.
 
-* Master + Node
-* Node
-* Node
+Create a new application from the blueprint **Openshift-v3-Training**
 
-The master is the scheduler/orchestrator and the API endpoint for all commands.
-This is similar to V2's "broker". We are also running the node software on the
-master.
+### Virtual Machines
+This environment will provide the following virtual machines for your use:
 
-The "node" is just like in OpenShift 2 -- it hosts user applications. The main
+* ose-workstation
+* ose-master
+* ose-node1
+* ose-node2
+
+The *ose-workstation* acts as an ssh jump server for every other machine in the environment.
+
+The *ose-master* is a scheduler/orchestrator and the API endpoint for all commands. This is similar to V2's "broker". We are also running the node software on the master.
+
+The nodes *ose-node1* and *ose-node2* function just like in OpenShift 2 -- hosting user applications. The main
 difference is that "gears" have been replaced with Docker container instances.
 You will learn much more about the inner workings of OpenShift throughout the
-rest of the document.
+rest of the training.
 
-### Requirements
-Each of the virtual machines should have 4+ GB of memory, 20+ GB of disk space,
-and the following configuration:
+### Hardware
+The *ose-master*, *ose-node1* and *ose-node2* each have 4+ GB of memory, and 20 GB of local hard disk space.
 
-* RHEL >=7.1 (Note: 7.1 kernel is required for openvswitch)
+
+### Software
+The following software has been installed:
+
+* RHEL >=7.1
+* kernel-3.10.0-229.4.2.el7.x86_64 (Note: 7.1 kernel is required for openvswitch)
 * "Minimal" installation option
+* openshift-0.5.2.2-0
+* docker-1.6.2-6
+* git
+* openvswitch-2.3.1-2
+
+**NOTE: No machine in this environment is running a desktop (GNOME).  When you need to access 
+
+### Storage
 
 The majority of storage requirements are related to Docker and etcd (the data
-store). Both of their contents live in /var, so it is recommended that the
-majority of the storage be allocated to /var.
+store). Docker configuration has been modified so that every machine in this environment uses lvm thin-pool backed storage:
+```
+           └─2209 /usr/bin/docker -d --selinux-enabled --insecure-registry 0.0.0.0/0 -s devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/docker--vg-docker--pool -b=lbr0 --mtu=1450 --add-registry registry.access.redhat.com
+```
+Each machine running docker has a separate local storage device `/dev/vdb` 
+```
+[root@ose-master ~]# lvs -o+devices --all
+  LV                  VG              Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert Devices             
+  docker-pool         docker-vg       twi-a-t---  5.99g             57.68  8.76                             docker-pool_tdata(0)
+  [docker-pool_tdata] docker-vg       Twi-ao----  5.99g                                                     /dev/vdb1(3)        
+  [docker-pool_tmeta] docker-vg       ewi-ao---- 12.00m                                                     /dev/vdb1(0)
+```
+ 
+etcd stores data in /var.  Although /var isn't configured to be a separate filesystem, there should be plenty of available space:
+
+```
+Filesystem                         Size  Used Avail Use% Mounted on
+/dev/mapper/rhel_ose--master-root  8.5G  1.5G  7.0G  18% /
+```
 
 As part of signing up for the beta program, you should have received an
 evaluation subscription. This subscription gave you access to the beta software.
 You will need to use subscription manager to both register your VMs, and attach
 them to the *OpenShift Enterprise High Touch Beta* subscription.
 
+### Network
 All of your VMs should be on the same logical network and be able to access one
 another.
 
-In almost all cases, when referencing VMs you must use hostnames and the
-hostnames that you use must match the output of `hostname -f` on each of your
-nodes. Forward DNS resolution of hostnames is an **absolute requirement**. This
-training document assumes the following configuration:
+In almost all cases, when referencing VMs you must use hostnames and the hostnames that you use must match the output of `hostname -f` on each of your nodes. Forward DNS resolution of hostnames is an **absolute requirement**. The learning environment has a pre-configured BIND (named) service running on *ose-workstation* using the following:
 
-* ose3-master.example.com (master+node)
-* ose3-node1.example.com
-* ose3-node2.example.com
+FQDN | Static IP 
+:--- |:---
+ose-workstation.paas.it | 192.168.100.5 
+ose-master.paas.it | 192.168.100.2 
+ose-node1.paas.it | 192.168.100.3 
+ose-node2.paas.it | 192.168.100.4 
 
-We do our best to point out where you will need to change things if your
-hostnames do not match.
+### Using a Browser in the Learning Environment
 
-If you cannot create real forward resolving DNS entries in your DNS system, you
-will need to set up your own DNS server in the beta testing environment.
-Documentation is provided on DNSMasq in an appendix, [APPENDIX - DNSMasq
-setup](#appendix---dnsmasq-setup)
+There are parts of the training that will require a web browser.  Instead of installing a desktop in the learning environment or X11 forwarding, establish a SOCKS proxy using ssh and ose-workstation.  Here are steps:
 
-Remember that NetworkManager may make changes to your DNS
-configuration/resolver/etc. You will need to properly configure your interfaces'
-DNS settings and/or configure NetworkManager appropriately.
+1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:
+```
+$ ssh -p 10006 root@oseworkstation-kablumopenshifttra-r6fxqfbf.srv.ravcloud.com -D 12345
+```
+**NOTE**: Leave this connection open while you are using your workstation's local firefox/chrome browser.
 
-More information on NetworkManager can be found in this comment:
+2. Open a new private window in firefox on your local workstation
 
-    https://github.com/openshift/training/issues/193#issuecomment-105693742
+3. In the private window modify firefox settings:  preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: localhost and Port: 12345 > make sure SOCKSv5 and Remote DNS are checked.
+
+**NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
+
+4. When you are done, make sure to restore your browser's configuration
+
+Chrome settings (unverified)
+
+http://www.adamburvill.com/2014/03/ssh-socks-tunnelling-and-avoiding-dns.html
+
+ Chrome doesn't use it's own settings for SOCKS proxy but rather uses the OS settings.  To set it up, type chrome://settings in the address bar and click Show Advanced Settings at the bottom:
+ Then click Change Proxy Settings > select a protocol to configure > check SOCKS Proxy > put in localhost 12345 > click OK and then Apply - chrome doesn't need extra dns configuration.
 
 ## Setting Up the Environment
 ### Use a Terminal Window Manager
