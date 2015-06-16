@@ -199,8 +199,7 @@ The following software has been installed:
 
 ### Storage
 
-The majority of storage requirements are related to Docker and etcd (the data
-store). Docker configuration has been modified so that every machine in this environment uses lvm thin-pool backed storage:
+The majority of storage requirements are related to Docker and etcd (the data store). Docker configuration has been modified so that every machine in this environment uses lvm thin-pool backed storage:
 ```
            └─2209 /usr/bin/docker -d --selinux-enabled --insecure-registry 0.0.0.0/0 -s devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/docker--vg-docker--pool -b=lbr0 --mtu=1450 --add-registry registry.access.redhat.com
 ```
@@ -221,8 +220,7 @@ Filesystem                         Size  Used Avail Use% Mounted on
 ```
 
 ### Network
-All of your VMs should be on the same logical network and be able to access one
-another.
+All of your VMs should be on the same logical network and be able to access one another.
 
 In almost all cases, when referencing VMs you must use hostnames and the hostnames that you use must match the output of `hostname -f` on each of your nodes. Forward DNS resolution of hostnames is an **absolute requirement**. The learning environment has a pre-configured BIND (named) service running on *ose-workstation* using the following:
 
@@ -239,13 +237,15 @@ There are parts of the training that will require a web browser.  Instead of ins
 
 1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:
 ```
-$ ssh -p 10006 root@oseworkstation-kablumopenshifttra-r6fxqfbf.srv.ravcloud.com -D 12345
+$ ssh -p 10001 root@oseworkstation-kablumopenshifttra-r6fxqfbf.srv.ravcloud.com -D 12345
 ```
 **NOTE**: Leave this connection open while you are using your workstation's local firefox browser.
 
 2. Open a new private window in firefox on your local workstation
 
-3. In the private window modify firefox settings:  preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: localhost and Port: 12345 > make sure SOCKSv5 and Remote DNS are checked.  
+3. In the private window modify firefox settings:  
+preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: **localhost** and Port: **12345** > make sure SOCKSv5 and Remote DNS are checked.
+![SOCKS](https://github.com/GSS-Training-RedHat/openshiftv3-training/blob/master/socks.png?raw=true "Firefox SOCKS")
 **NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
 
 4. When you are done, make sure to restore your browser's configuration
