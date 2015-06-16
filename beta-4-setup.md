@@ -13,7 +13,7 @@ This environment will provide the following virtual machines for your use:
 * ose-node1
 * ose-node2
 
-The *ose-workstation* acts as an ssh jump server for every other machine in the environment.
+The *ose-workstation* acts as an ssh jump server for every other machine in the environment.  It also is running bind (named) and the authoritative nameserver for the paas.it domain.
 
 The *ose-master* is a scheduler/orchestrator and the API endpoint for all commands. This is similar to V2's "broker". We are also running the node software on the master.
 
@@ -37,7 +37,7 @@ The following software has been installed:
 * openvswitch-2.3.1-2
 * git
 
-**NOTE: No machine in this environment is running a desktop (GNOME).
+**NOTE**: No machine in this environment is running a desktop (GNOME).
 
 ### Storage
 
@@ -79,13 +79,16 @@ ose-node2.paas.it | 192.168.100.4
 
 There are parts of the training that will require a web browser.  Instead of installing a desktop in the learning environment or using X11 forwarding, establish a SOCKS proxy using ssh and ose-workstation.  Here are the steps:
 
-1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:```
+1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:
+```
 $ ssh -p 10006 root@oseworkstation-kablumopenshifttra-r6fxqfbf.srv.ravcloud.com -D 12345
-```**NOTE**: Leave this connection open while you are using your workstation's local firefox browser.
+```
+**NOTE**: Leave this connection open while you are using your workstation's local firefox browser.
 
 2. Open a new private window in firefox on your local workstation
 
-3. In the private window modify firefox settings:  preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: localhost and Port: 12345 > make sure SOCKSv5 and Remote DNS are checked.  **NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
+3. In the private window modify firefox settings:  preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: localhost and Port: 12345 > make sure SOCKSv5 and Remote DNS are checked.  
+**NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
 
 4. When you are done, make sure to restore your browser's configuration
 
@@ -119,7 +122,7 @@ docker.io/openshift/hello-openshift                                    v0.4.3   
 ### DNS
 You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP
 address of the OpenShift router. For this training, we will ensure that the
-router will end up on the OpenShift server that is running the master. Go
+router will end up on the OpenShift server that is running the master (ose-master). Go
 ahead and create a wildcard DNS entry for "cloudapps" (or something similar),
 with a low TTL, that points to the public IP address of your master.
 
