@@ -235,20 +235,22 @@ ose-node2.paas.it | 192.168.100.4
 
 There are parts of the training that will require a web browser.  Instead of installing a desktop in the learning environment or using X11 forwarding, establish a SOCKS proxy using ssh and ose-workstation.  Here are the steps:
 
-1. First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:
+- First create an ssh socks connection to ose-workstation by adding -D 12345 to the ssh command provided by ravshello:
 ```
 $ ssh -p 10001 root@oseworkstation-kablumopenshifttra-r6fxqfbf.srv.ravcloud.com -D 12345
 ```
 **NOTE**: Leave this connection open while you are using your workstation's local firefox browser.
 
-2. Open a new private window in firefox on your local workstation
+- Open a new private window in firefox on your local workstation
 
-3. In the private window modify firefox settings:  
+- In the private window modify firefox settings:  
 preferences > advanced > network tab > Configure how Firefox connects to the Internet Settings... >  For SOCKS Host: **localhost** and Port: **12345** > make sure SOCKSv5 and Remote DNS are checked.
+
 ![SOCKS](https://github.com/GSS-Training-RedHat/openshiftv3-training/blob/master/socks.png?raw=true "Firefox SOCKS")
+
 **NOTE**: If you do not have the Remote DNS check box (older version of firefox) then you'll need to modify firefox configuration by typing in about:config in the private window.  Look for the config network.proxy.socks_remote_dns and set it to true.
 
-4. When you are done, make sure to restore your browser's configuration
+- When you are done, make sure to restore your browser's configuration
 
 Chrome settings (unverified from http://www.adamburvill.com/2014/03/ssh-socks-tunnelling-and-avoiding-dns.html)
 
@@ -487,11 +489,9 @@ Since we are running all of the components in higher loglevels, it is suggested 
 
 ## Auth, Projects, and the Web Console
 ### Configuring htpasswd Authentication
-OpenShift v3 supports a number of mechanisms for authentication. The simplest
-use case for our testing purposes is `htpasswd`-based authentication.
+OpenShift v3 supports a number of mechanisms for authentication. The simplest use case for our testing purposes is `htpasswd`-based authentication.
 
-To start, we will need the `htpasswd` binary, which is made available by
-installing:
+To start, we will need the `htpasswd` binary, which is made available by installing on ose-master:
 
     yum -y install httpd-tools
 
@@ -501,7 +501,7 @@ From there, we can create a password for our users, Joe and Alice:
     htpasswd -b /etc/openshift/openshift-passwd joe redhat
     htpasswd -b /etc/openshift/openshift-passwd alice redhat
 
-Remember, you created these users previously.
+**NOTE:** `joe` and `alice` are already system users on ose-master.
 
 The OpenShift configuration is kept in a YAML file which currently lives at
 `/etc/openshift/master/master-config.yaml`. Ansible was configured to edit
