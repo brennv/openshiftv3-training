@@ -282,7 +282,7 @@ docker.io/openshift/hello-openshift                                    v0.4.3   
 ### DNS
 You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP address of the OpenShift router. For this training, we will ensure that the router will end up on the OpenShift server that is running the master (ose-master). ose-workstation's named service has been configured with the following A record:
 ```
-*.cloudapps.example.com. 300 IN  A 192.168.100.2
+*.cloudapps.paas.it. 300 IN  A 192.168.100.2
 ```
 
 ## Openshift Enterprise Installation
