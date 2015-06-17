@@ -295,8 +295,7 @@ You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP a
 *.cloudapps.paas.it. 300 IN  A 192.168.100.2
 ```
 
-We will want default routes (we'll talk about these later) to automatically get
-this sub-domain so, `/etc/sysconfig/openshift-master` on ose-master has been modified with the following:
+We will want default routes (we'll talk about these later) to automatically get to this sub-domain so, `/etc/sysconfig/openshift-master` on ose-master has been modified with the following:
 
     OPENSHIFT_ROUTE_SUBDOMAIN=cloudapps.paas.it
 
