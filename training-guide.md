@@ -286,7 +286,7 @@ You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP a
 ```
 
 ## Openshift Enterprise Installation
-While the ose installer is being finalized, your learning environment offers a pre-installed ose v3 based on the beta4 softare.  Once the environment has started, you should find the following from `ravshello`:
+While the ose installer is being finalized, your learning environment offers a pre-installed ose v3 based on the beta4 software.  Once the environment has started, you should find the following from `ravshello`:
 ```
   ose-workstation
      State:              STARTED
