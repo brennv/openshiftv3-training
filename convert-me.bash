@@ -12,3 +12,7 @@ done
 sed -i 's/192.168.133/192.168.100/g' $myFILE
 sed -i 's/example.com/paas.it/g' $myFILE
 sed -i 's/ose3-/ose-/g' $myFILE
+
+
+#git clone https://github.com/openshift/training.git
+#cd ~/training/beta4

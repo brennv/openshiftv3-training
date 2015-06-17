@@ -295,6 +295,12 @@ You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP a
 *.cloudapps.paas.it. 300 IN  A 192.168.100.2
 ```
 
+We will want default routes (we'll talk about these later) to automatically get
+this sub-domain so, `/etc/sysconfig/openshift-master` on ose-master has been modified with the following:
+
+    OPENSHIFT_ROUTE_SUBDOMAIN=cloudapps.paas.it
+
+
 ## Openshift Enterprise Installation
 While the ose installer is being finalized, your learning environment offers a pre-installed ose v3 based on the beta4 software.  Once the environment has started, you should find the following from `ravshello`:
 ```
