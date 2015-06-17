@@ -1,518 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [OpenShift Beta 4](#openshift-beta-4)
-  - [Architecture and Requirements](#architecture-and-requirements)
-    - [Architecture](#architecture)
-    - [Requirements](#requirements)
-  - [Setting Up the Environment](#setting-up-the-environment)
-    - [Use a Terminal Window Manager](#use-a-terminal-window-manager)
-    - [DNS](#dns)
-    - [Assumptions](#assumptions)
-    - [Git](#git)
-    - [Preparing Each VM](#preparing-each-vm)
-    - [Docker Storage Setup (optional, recommended)](#docker-storage-setup-optional-recommended)
-    - [Grab Docker Images (optional, recommended)](#grab-docker-images-optional-recommended)
-    - [Clone the Training Repository](#clone-the-training-repository)
-    - [Add Development Users](#add-development-users)
-  - [Ansible-based Installer](#ansible-based-installer)
-    - [Install Ansible](#install-ansible)
-    - [Generate SSH Keys](#generate-ssh-keys)
-    - [Distribute SSH Keys](#distribute-ssh-keys)
-    - [Clone the Ansible Repository](#clone-the-ansible-repository)
-    - [Configure Ansible](#configure-ansible)
-    - [Modify Hosts](#modify-hosts)
-    - [Run the Ansible Installer](#run-the-ansible-installer)
-    - [Add Cloud Domain](#add-cloud-domain)
-  - [Regions and Zones](#regions-and-zones)
-    - [Scheduler and Defaults](#scheduler-and-defaults)
-    - [The NodeSelector](#the-nodeselector)
-    - [Customizing the Scheduler Configuration](#customizing-the-scheduler-configuration)
-    - [Node Labels](#node-labels)
-  - [Useful OpenShift Logs](#useful-openshift-logs)
-  - [Auth, Projects, and the Web Console](#auth-projects-and-the-web-console)
-    - [Configuring htpasswd Authentication](#configuring-htpasswd-authentication)
-    - [A Project for Everything](#a-project-for-everything)
-    - [Web Console](#web-console)
-  - [Your First Application](#your-first-application)
-    - [Resources](#resources)
-    - [Applying Quota to Projects](#applying-quota-to-projects)
-    - [Applying Limit Ranges to Projects](#applying-limit-ranges-to-projects)
-    - [Login](#login)
-    - [Grab the Training Repo Again](#grab-the-training-repo-again)
-    - [The Hello World Definition JSON](#the-hello-world-definition-json)
-    - [Run the Pod](#run-the-pod)
-    - [Looking at the Pod in the Web Console](#looking-at-the-pod-in-the-web-console)
-    - [Quota Usage](#quota-usage)
-    - [Extra Credit](#extra-credit)
-    - [Delete the Pod](#delete-the-pod)
-    - [Quota Enforcement](#quota-enforcement)
-  - [Services](#services)
-  - [Routing](#routing)
-    - [Creating a Wildcard Certificate](#creating-a-wildcard-certificate)
-    - [Creating the Router](#creating-the-router)
-    - [Router Placement By Region](#router-placement-by-region)
-    - [Viewing Router Stats](#viewing-router-stats)
-  - [The Complete Pod-Service-Route](#the-complete-pod-service-route)
-    - [Creating the Definition](#creating-the-definition)
-    - [Project Status](#project-status)
-    - [Verifying the Service](#verifying-the-service)
-    - [Verifying the Routing](#verifying-the-routing)
-    - [The Web Console](#the-web-console)
-  - [Project Administration](#project-administration)
-    - [Deleting a Project](#deleting-a-project)
-  - [Preparing for S2I: the Registry](#preparing-for-s2i-the-registry)
-    - [Storage for the registry](#storage-for-the-registry)
-    - [Creating the registry](#creating-the-registry)
-  - [S2I - What Is It?](#s2i---what-is-it)
-    - [Create a New Project](#create-a-new-project)
-    - [Switch Projects](#switch-projects)
-    - [A Simple Code Example](#a-simple-code-example)
-    - [CLI versus Console](#cli-versus-console)
-    - [Adding the Builder ImageStreams](#adding-the-builder-imagestreams)
-    - [Wait, What's an ImageStream?](#wait-whats-an-imagestream)
-    - [Adding Code Via the Web Console](#adding-code-via-the-web-console)
-    - [The Web Console Revisited](#the-web-console-revisited)
-    - [Examining the Build](#examining-the-build)
-    - [Testing the Application](#testing-the-application)
-    - [Adding a Route to Our Application](#adding-a-route-to-our-application)
-    - [Implications of Quota Enforcement on Scaling](#implications-of-quota-enforcement-on-scaling)
-  - [Templates, Instant Apps, and "Quickstarts"](#templates-instant-apps-and-quickstarts)
-    - [A Project for the Quickstart](#a-project-for-the-quickstart)
-    - [A Quick Aside on Templates](#a-quick-aside-on-templates)
-    - [Adding the Template](#adding-the-template)
-    - [Create an Instance of the Template](#create-an-instance-of-the-template)
-    - [Using Your App](#using-your-app)
-  - [Creating and Wiring Disparate Components](#creating-and-wiring-disparate-components)
-    - [Create a New Project](#create-a-new-project-1)
-    - [Stand Up the Frontend](#stand-up-the-frontend)
-    - [Expose the Service](#expose-the-service)
-    - [Add the Database Template](#add-the-database-template)
-    - [Create the Database From the Web Console](#create-the-database-from-the-web-console)
-    - [Visit Your Application Again](#visit-your-application-again)
-    - [Replication Controllers](#replication-controllers)
-    - [Revisit the Webpage](#revisit-the-webpage)
-  - [Rollback/Activate and Code Lifecycle](#rollbackactivate-and-code-lifecycle)
-    - [Fork the Repository](#fork-the-repository)
-    - [Update the BuildConfig](#update-the-buildconfig)
-    - [Change the Code](#change-the-code)
-- [ Welcome to an OpenShift v3 Demo App! ](#welcome-to-an-openshift-v3-demo-app)
-- [ This is my crustom demo! ](#this-is-my-crustom-demo)
-    - [Start a Build with a Webhook](#start-a-build-with-a-webhook)
-    - [Rollback](#rollback)
-    - [Activate](#activate)
-  - [A Simple PHP Example](#a-simple-php-example)
-    - [Create a PHP Project](#create-a-php-project)
-    - [Build the App](#build-the-app)
-    - [Create a Route](#create-a-route)
-    - [Test Your App](#test-your-app)
-    - [Kill Your Pod](#kill-your-pod)
-  - [Using Persistent Storage (Optional)](#using-persistent-storage-optional)
-    - [Export an NFS Volume](#export-an-nfs-volume)
-    - [NFS Firewall](#nfs-firewall)
-    - [Allow NFS Access in SELinux Policy](#allow-nfs-access-in-selinux-policy)
-    - [Create a PersistentVolume](#create-a-persistentvolume)
-    - [Claim the PersistentVolume](#claim-the-persistentvolume)
-    - [Use the Claimed Volume](#use-the-claimed-volume)
-    - [Revisit and Reupload](#revisit-and-reupload)
-    - [Kill the Pod](#kill-the-pod)
-  - [More Exec Examples](#more-exec-examples)
-    - [Introduction to exec](#introduction-to-exec)
-  - [Customized Build and Run Processes](#customized-build-and-run-processes)
-    - [Add a Script](#add-a-script)
-    - [Kick Off a Build](#kick-off-a-build)
-    - [Watch the Build Logs](#watch-the-build-logs)
-  - [Lifecycle Pre and Post Deployment Hooks](#lifecycle-pre-and-post-deployment-hooks)
-    - [Examining Deployment Hooks](#examining-deployment-hooks)
-    - [Modifying the Hooks](#modifying-the-hooks)
-    - [Quickly Clean Up](#quickly-clean-up)
-    - [Build Again](#build-again)
-    - [Verify the Migration](#verify-the-migration)
-  - [Arbitrary Docker Image (Builder)](#arbitrary-docker-image-builder)
-    - [Create a Project](#create-a-project)
-    - [Build Wordpress](#build-wordpress)
-    - [Test Your Application](#test-your-application)
-    - [Application Resource Labels](#application-resource-labels)
-  - [EAP Example](#eap-example)
-    - [Create a Project](#create-a-project-1)
-    - [Instantiate the Template](#instantiate-the-template)
-    - [Update the BuildConfig](#update-the-buildconfig-1)
-    - [Watch the Build](#watch-the-build)
-    - [Visit Your Application](#visit-your-application)
-  - [Conclusion](#conclusion)
-- [APPENDIX - DNSMasq setup](#appendix---dnsmasq-setup)
-    - [Verifying DNSMasq](#verifying-dnsmasq)
-- [APPENDIX - LDAP Authentication](#appendix---ldap-authentication)
-    - [Prerequirements:](#prerequirements)
-    - [Setting up an example LDAP server:](#setting-up-an-example-ldap-server)
-    - [Creating the Basic Auth service](#creating-the-basic-auth-service)
-    - [Using an LDAP server external to OpenShift](#using-an-ldap-server-external-to-openshift)
-    - [Upcoming changes](#upcoming-changes)
-- [APPENDIX - Import/Export of Docker Images (Disconnected Use)](#appendix---importexport-of-docker-images-disconnected-use)
-- [APPENDIX - Cleaning Up](#appendix---cleaning-up)
-- [APPENDIX - Pretty Output](#appendix---pretty-output)
-- [APPENDIX - Troubleshooting](#appendix---troubleshooting)
-- [APPENDIX - Infrastructure Log Aggregation](#appendix---infrastructure-log-aggregation)
-  - [Enable Remote Logging on Master](#enable-remote-logging-on-master)
-  - [Enable logging to /var/log/openshift](#enable-logging-to-varlogopenshift)
-  - [Configure nodes to send openshift logs to your master](#configure-nodes-to-send-openshift-logs-to-your-master)
-  - [Optionally Log Each Node to a unique directory](#optionally-log-each-node-to-a-unique-directory)
-- [APPENDIX - JBoss Tools for Eclipse](#appendix---jboss-tools-for-eclipse)
-  - [Installation](#installation)
-  - [Connecting to the Server](#connecting-to-the-server)
-- [APPENDIX - Working with HTTP Proxies](#appendix---working-with-http-proxies)
-  - [Importing ImageStreams](#importing-imagestreams)
-  - [S2I Builds](#s2i-builds)
-  - [Setting Environment Variables in Pods](#setting-environment-variables-in-pods)
-  - [Git Repository Access](#git-repository-access)
-  - [Proxying Docker Pull](#proxying-docker-pull)
-  - [Future Considerations](#future-considerations)
-- [APPENDIX - Installing in IaaS Clouds](#appendix---installing-in-iaas-clouds)
-  - [Generic Cloud Install](#generic-cloud-install)
-  - [Automated AWS Install With Ansible](#automated-aws-install-with-ansible)
-- [APPENDIX - Linux, Mac, and Windows clients](#appendix---linux-mac-and-windows-clients)
-  - [Downloading The Clients](#downloading-the-clients)
-  - [Log In To Your OpenShift Environment](#log-in-to-your-openshift-environment)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# OpenShift Beta 4
-## Architecture and Requirements
-### Architecture
-The documented architecture for the beta testing is pretty simple. There are
-three systems:
-
-* Master + Node
-* Node
-* Node
-
-The master is the scheduler/orchestrator and the API endpoint for all commands.
-This is similar to V2's "broker". We are also running the node software on the
-master.
-
-The "node" is just like in OpenShift 2 -- it hosts user applications. The main
-difference is that "gears" have been replaced with Docker container instances.
-You will learn much more about the inner workings of OpenShift throughout the
-rest of the document.
-
-### Requirements
-Each of the virtual machines should have 4+ GB of memory, 20+ GB of disk space,
-and the following configuration:
-
-* RHEL >=7.1 (Note: 7.1 kernel is required for openvswitch)
-* "Minimal" installation option
-
-The majority of storage requirements are related to Docker and etcd (the data
-store). Both of their contents live in /var, so it is recommended that the
-majority of the storage be allocated to /var.
-
-As part of signing up for the beta program, you should have received an
-evaluation subscription. This subscription gave you access to the beta software.
-You will need to use subscription manager to both register your VMs, and attach
-them to the *OpenShift Enterprise High Touch Beta* subscription.
-
-All of your VMs should be on the same logical network and be able to access one
-another.
-
-In almost all cases, when referencing VMs you must use hostnames and the
-hostnames that you use must match the output of `hostname -f` on each of your
-nodes. Forward DNS resolution of hostnames is an **absolute requirement**. This
-training document assumes the following configuration:
-
-* ose3-master.example.com (master+node)
-* ose3-node1.example.com
-* ose3-node2.example.com
-
-We do our best to point out where you will need to change things if your
-hostnames do not match.
-
-If you cannot create real forward resolving DNS entries in your DNS system, you
-will need to set up your own DNS server in the beta testing environment.
-Documentation is provided on DNSMasq in an appendix, [APPENDIX - DNSMasq
-setup](#appendix---dnsmasq-setup)
-
-Remember that NetworkManager may make changes to your DNS
-configuration/resolver/etc. You will need to properly configure your interfaces'
-DNS settings and/or configure NetworkManager appropriately.
-
-More information on NetworkManager can be found in this comment:
-
-    https://github.com/openshift/training/issues/193#issuecomment-105693742
-
-## Setting Up the Environment
-### Use a Terminal Window Manager
-We **strongly** recommend that you use some kind of terminal window manager
-(Screen, Tmux).
-
-### DNS
-You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP
-address of the OpenShift router. For this training, we will ensure that the
-router will end up on the OpenShift server that is running the master. Go
-ahead and create a wildcard DNS entry for "cloudapps" (or something similar),
-with a low TTL, that points to the public IP address of your master.
-
-For example:
-
-    *.cloudapps.example.com. 300 IN  A 192.168.133.2
-
-It is possible to use dnsmasq inside of your beta environment to handle these
-duties. See the [appendix on dnsmasq](#appendix---dnsmasq-setup) if you can't
-easily manipulate your existing DNS environment.
-
-### Assumptions
-In most cases you will see references to "example.com" and other FQDNs related
-to it. If you choose not to use "example.com" in your configuration, that is
-fine, but remember that you will have to adjust files and actions accordingly.
-
-### Git
-You will either need internet access or read and write access to an internal
-http-based git server where you will duplicate the public code repositories used
-in the labs.
-
-### Preparing Each VM
-Once your VMs are built and you have verified DNS and network connectivity you
-can:
-
-* Configure yum / subscription manager as follows:
-
-        subscription-manager repos --disable="*"
-        subscription-manager repos \
-        --enable="rhel-7-server-rpms" \
-        --enable="rhel-7-server-extras-rpms" \
-        --enable="rhel-7-server-optional-rpms" \
-        --enable="rhel-server-7-ose-beta-rpms"
-
-    **Note:** You will have had to register/attach your system first.  Also,
-    *rhel-server-7-ose-beta-rpms* is not a typo.  The name will change at GA to be
-    consistent with the RHEL channel names.
-
-* Import the GPG key for beta:
-
-        rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta
-
-Onn **each** VM:
-
-1. Install deltarpm to make package updates a little faster:
-
-        yum -y install deltarpm
-
-1. Install missing packages:
-
-        yum -y install wget vim-enhanced net-tools bind-utils tmux git
-
-1. Update:
-
-        yum -y update
-
-### Docker Storage Setup (optional, recommended)
-**IMPORTANT:** The default docker storage configuration uses loopback devices
-and is not appropriate for production. Red Hat considers the dm.thinpooldev
-storage option to be the only appropriate configuration for production use.
-
-If you want to configure the storage for Docker, you'll need to first install
-Docker, as the installer currently does not auto-configure this storage setup
-for you.
-
-    yum -y install docker
-
-Make sure that you are running at least `docker-1.6.2-6.el7.x86_64`.
-
-In order to use dm.thinpooldev you must have an LVM thinpool available, the
-`docker-storage-setup` package will assist you in configuring LVM. However you
-must provision your host to fit one of these three scenarios :
-
-*  Root filesystem on LVM with free space remaining on the volume group. Run
-`docker-storage-setup` with no additional configuration, it will allocate the
-remaining space for the thinpool.
-
-*  A dedicated LVM volume group where you'd like to reate your thinpool
-
-        echo <<EOF > /etc/sysconfig/docker-storage-setup
-        VG=docker-vg
-        SETUP_LVM_THIN_POOL=yes
-        EOF
-        docker-storage-setup
-
-*  A dedicated block device, which will be used to create a volume group and thinpool
-
-        cat <<EOF > /etc/sysconfig/docker-storage-setup
-        DEVS=/dev/vdc
-        VG=docker-vg
-        SETUP_LVM_THIN_POOL=yes
-        EOF
-        docker-storage-setup
-
-Once complete you should have a thinpool named `docker-pool` and docker should
-be configured to use it in `/etc/sysconfig/docker-storage`.
-
-    # lvs
-    LV                  VG        Attr       LSize  Pool Origin Data%  Meta% Move Log Cpy%Sync Convert
-    docker-pool         docker-vg twi-a-tz-- 48.95g             0.00   0.44
-
-    # cat /etc/sysconfig/docker-storage
-    DOCKER_STORAGE_OPTIONS=--storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/openshift--vg-docker--pool
-
-**Note:** If you had previously used docker with loopback storage you should
-clean out `/var/lib/docker` This is a destructive operation and will delete all
-images and containers on the host.
-
-    systemctl stop docker
-    rm -rf /var/lib/docker/*
-    systemctl start docker
-
-### Grab Docker Images (optional, recommended)
-**If you want** to pre-fetch Docker images to make the first few things in your
-environment happen **faster**, you'll need to first install Docker if you didn't
-install it when (optionally) configuring the Docker storage previously.
-
-    yum -y install docker
-
-Make sure that you are running at least `docker-1.6.2-6.el7.x86_64`.
-
-You'll need to add `--insecure-registry 0.0.0.0/0` to your
-`/etc/sysconfig/docker` `OPTIONS`. Then:
-
-    systemctl start docker
-
-On all of your systems, grab the following docker images:
-
-    docker pull registry.access.redhat.com/openshift3_beta/ose-haproxy-router:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-deployer:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-sti-builder:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-sti-image-builder:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-docker-builder:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-pod:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/ose-docker-registry:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/sti-basicauthurl:latest
-    docker pull registry.access.redhat.com/openshift3_beta/ose-keepalived-ipfailover:v0.5.2.2
-
-It may be advisable to pull the following Docker images as well, since they are
-used during the various labs:
-
-    docker pull registry.access.redhat.com/openshift3_beta/ruby-20-rhel7:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/mysql-55-rhel7:v0.5.2.2
-    docker pull registry.access.redhat.com/openshift3_beta/php-55-rhel7:v0.5.2.2
-    docker pull registry.access.redhat.com/jboss-eap-6/eap-openshift:v0.5.2.2
-    docker pull openshift/hello-openshift:v0.4.3
-
-**Note:** If you built your VM for a previous beta version and at some point
-used an older version of Docker, you need to *reinstall* or *remove+install*
-Docker after removing `/etc/sysconfig/docker`. The options in the config file
-changed and RPM will not overwrite your existing file if you just do a "yum
-update".
-
-    yum -y remove docker
-    rm /etc/sysconfig/docker*
-    yum -y install docker
-
-### Clone the Training Repository
-On your master, it makes sense to clone the training git repository:
-
-    cd
-    git clone https://github.com/openshift/training.git
-
-**REMINDER**
-Almost all of the files for this training are in the training folder you just
-cloned.
-
-### Add Development Users
-In the "real world" your developers would likely be using the OpenShift tools on
-their own machines (`osc` and the web console). For the Beta training, we
-will create user accounts for two non-privileged users of OpenShift, *joe* and
-*alice*, on the master. This is done for convenience and because we'll be using
-`htpasswd` for authentication.
-
-    useradd joe
-    useradd alice
-
-We will come back to these users later. Remember to do this on the `master`
-system, and not the nodes.
-
-## Ansible-based Installer
-The installer uses Ansible. Eventually there will be an interactive text-based
-CLI installer that leverages Ansible under the covers. For now, we have to
-invoke Ansible manually.
-
-### Install Ansible
-Ansible currently comes from the EPEL repository.
-
-Install EPEL:
-
-    yum -y install \
-    http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
-
-Disable EPEL so that it is not accidentally used later:
-
-    sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
-
-Install the packages for Ansible:
-
-    yum -y --enablerepo=epel install ansible
-
-### Generate SSH Keys
-Because of the way Ansible works, SSH key distribution is required. First,
-generate an SSH key on your master, where we will run Ansible:
-
-    ssh-keygen
-
-Do *not* use a password.
-
-### Distribute SSH Keys
-An easy way to distribute your SSH keys is by using a `bash` loop:
-
-    for host in ose3-master.example.com ose3-node1.example.com \
-    ose3-node2.example.com; do ssh-copy-id -i ~/.ssh/id_rsa.pub \
-    $host; done
-
-Remember, if your FQDNs are different, you would have to modify the loop
-accordingly.
-
-### Clone the Ansible Repository
-The configuration files for the Ansible installer are currently available on
-Github. Clone the repository:
-
-    cd
-    git clone https://github.com/detiber/openshift-ansible.git -b v3-beta4
-    cd ~/openshift-ansible
-
-### Configure Ansible
-Copy the staged Ansible configuration files to `/etc/ansible`:
-
-    /bin/cp -r ~/training/beta4/ansible/* /etc/ansible/
-
-### Modify Hosts
-If you are not using the "example.com" domain and the training example
-hostnames, modify `/etc/ansible/hosts` accordingly. 
-
-Also, if you are using multiple NICs and will be trying to direct various
-traffic to different places, you will need to take a look at [Generic Cloud
-Install](#generic-cloud-install) to learn more about the syntax of Ansible's
-`hosts` file.
-
-### Run the Ansible Installer
-Now we can simply run the Ansible installer:
-
-    ansible-playbook ~/openshift-ansible/playbooks/byo/config.yml
-
-If you looked at the Ansible hosts file, note that our master
-(ose3-master.example.com) was present in both the `master` and the `node`
-section.
-
-Effectively, Ansible is going to install and configure node software on all the
-nodes and master software just on `ose3-master.example.com` .
-
-### Add Cloud Domain
-If you want default routes (we'll talk about these later) to automatically get
-the right domain (the one you configured earlier with your wildcard DNS), then
-you should edit `/etc/sysconfig/openshift-master` and add the following:
-
-    OPENSHIFT_ROUTE_SUBDOMAIN=cloudapps.example.com
-
-Or modify it appropriately for your domain.
-
-There was also some information about "regions" and "zones" in the hosts file.
-Let's talk about those concepts now.
 
 ## Regions and Zones
 If you think you're about to learn how to configure regions and zones in
@@ -680,9 +165,9 @@ on the nodes. You can look at how the labels were implemented by doing:
     osc get nodes
 
     NAME                      LABELS                                                                     STATUS
-    ose3-master.example.com   kubernetes.io/hostname=ose3-master.example.com,region=infra,zone=default   Ready
-    ose3-node1.example.com    kubernetes.io/hostname=ose3-node1.example.com,region=primary,zone=east     Ready
-    ose3-node2.example.com    kubernetes.io/hostname=ose3-node2.example.com,region=primary,zone=west     Ready
+    ose-master.paas.it   kubernetes.io/hostname=ose-master.paas.it,region=infra,zone=default   Ready
+    ose-node1.paas.it    kubernetes.io/hostname=ose-node1.paas.it,region=primary,zone=east     Ready
+    ose-node2.paas.it    kubernetes.io/hostname=ose-node2.paas.it,region=primary,zone=west     Ready
 
 At this point we have a running OpenShift environment across three hosts, with
 one master and three nodes, divided up into two regions -- "*infra*structure"
@@ -919,7 +404,7 @@ Then, execute:
 
     osc login -u joe \
     --certificate-authority=/etc/openshift/master/ca.crt \
-    --server=https://ose3-master.example.com:8443
+    --server=https://ose-master.paas.it:8443
 
 OpenShift, by default, is using a self-signed SSL certificate, so we must point
 our tool at the CA file.
@@ -931,19 +416,19 @@ folder. Take a look at it, and you'll see something like the following:
     clusters:
     - cluster:
         certificate-authority: ../../../../etc/openshift/master/ca.crt
-        server: https://ose3-master.example.com:8443
-      name: ose3-master-example-com:8443
+        server: https://ose-master.paas.it:8443
+      name: ose-master-paas.it:8443
     contexts:
     - context:
-        cluster: ose3-master-example-com:8443
+        cluster: ose-master-paas.it:8443
         namespace: demo
-        user: joe/ose3-master-example-com:8443
-      name: demo/ose3-master-example-com:8443/joe
-    current-context: demo/ose3-master-example-com:8443/joe
+        user: joe/ose-master-paas.it:8443
+      name: demo/ose-master-paas.it:8443/joe
+    current-context: demo/ose-master-paas.it:8443/joe
     kind: Config
     preferences: {}
     users:
-    - name: joe/ose3-master-example-com:8443
+    - name: joe/ose-master-paas.it:8443
       user:
         token: _ebJfOdcHy8TW4XIDxJjOQEC_yJp08zW0xPI-JWWU3c
 
@@ -1033,7 +518,7 @@ Issue a `get pods` to see the details of how it was defined:
 
     osc get pods
     POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose3-node1.example.com/192.168.133.3   name=hello-openshift   Running   16 seconds   
+    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   16 seconds   
                                  hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   2 seconds   
 
 The output of this command shows all of the Docker containers in a pod, which
@@ -1057,7 +542,7 @@ networking in OpenShift is outside the scope of this material.
 To verify that the app is working, you can issue a curl to the app's port *on
 the node where the pod is running*
 
-    [root@ose3-node1 ~]# curl localhost:36061
+    [root@ose-node1 ~]# curl localhost:36061
     Hello OpenShift!
 
 Hooray!
@@ -1191,7 +676,7 @@ Here is an example route resource JSON definition:
         "name": "hello-openshift-route"
       },
       "spec": {
-        "host": "hello-openshift.cloudapps.example.com",
+        "host": "hello-openshift.cloudapps.paas.it",
         "to": {
           "name": "hello-openshift-service"
         },
@@ -1239,7 +724,7 @@ On the master, as `root`:
     CA=/etc/openshift/master
     osadm create-server-cert --signer-cert=$CA/ca.crt \
           --signer-key=$CA/ca.key --signer-serial=$CA/ca.serial.txt \
-          --hostnames='*.cloudapps.example.com' \
+          --hostnames='*.cloudapps.paas.it' \
           --cert=cloudapps.crt --key=cloudapps.key
 
 Now we need to combine `cloudapps.crt` and `cloudapps.key` with the CA into
@@ -1301,7 +786,7 @@ In the output, you should see the router pod status change to "running" after a
 few moments (it may take up to a few minutes):
 
     POD              IP         CONTAINER(S)   IMAGE(S)                                                                 HOST                                    LABELS                                                      STATUS    CREATED      MESSAGE
-    router-1-cutck   10.1.0.4                                                                                           ose3-master.example.com/192.168.133.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes   
+    router-1-cutck   10.1.0.4                                                                                           ose-master.paas.it/192.168.100.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes   
                                 router         registry.access.redhat.com/openshift3_beta/ose-haproxy-router:v0.5.2.2                                                                                                       Running   18 minutes
 
 Note: This output is huge, wide, and ugly. We're working on making it nicer. You
@@ -1354,7 +839,7 @@ admins.
 
 Ensure that port 1936 is accessible and visit:
 
-    http://admin:cEVu2hUb@ose3-master.example.com:1936 
+    http://admin:cEVu2hUb@ose-master.paas.it:1936 
 
 to view your router stats.
 
@@ -1401,7 +886,7 @@ and a corresponding route. It also includes a deployment configuration.
             "name": "hello-openshift-route"
           },
           "spec": {
-            "host": "hello-openshift.cloudapps.example.com",
+            "host": "hello-openshift.cloudapps.paas.it",
             "to": {
               "name": "hello-openshift-service"
             },
@@ -1484,12 +969,12 @@ In the JSON above:
   * with the id `hello-openshift-service`
   * with the selector `name=hello-openshift`
 * There is a route:
-  * with the FQDN `hello-openshift.cloudapps.example.com`
+  * with the FQDN `hello-openshift.cloudapps.paas.it`
   * with the `spec` `to` `name=hello-openshift-service`
 
 If we work from the route down to the pod:
 
-* The route for `hello-openshift.cloudapps.example.com` has an HAProxy pool
+* The route for `hello-openshift.cloudapps.paas.it` has an HAProxy pool
 * The pool is for any pods in the service whose ID is `hello-openshift-service`,
     via the `serviceName` directive of the route.
 * The service `hello-openshift-service` includes every pod who has a label
@@ -1497,7 +982,7 @@ If we work from the route down to the pod:
 * There is a single pod with a single container that has the label
     `name=hello-openshift-label`
 
-If you are not using the `example.com` domain you will need to edit the route
+If you are not using the `paas.it` domain you will need to edit the route
 portion of `test-complete.json` to match your DNS environment.
 
 **Logged in as `joe`,** go ahead and use `osc` to create everything:
@@ -1587,11 +1072,11 @@ If you see some content that looks like:
       },
       "ServiceAliasConfigs": {
         "demo-hello-openshift-route": {
-          "Host": "hello-openshift.cloudapps.example.com",
+          "Host": "hello-openshift.cloudapps.paas.it",
           "Path": "",
           "TLSTermination": "edge",
           "Certificates": {
-            "hello-openshift.cloudapps.example.com": {
+            "hello-openshift.cloudapps.paas.it": {
               "ID": "demo-hello-openshift-route",
               "Contents": "",
               "PrivateKey": ""
@@ -1613,17 +1098,17 @@ Go ahead and `exit` from the container.
 You can reach the route securely and check that it is using the right certificate:
 
     curl --cacert /etc/openshift/master/ca.crt \
-             https://hello-openshift.cloudapps.example.com
+             https://hello-openshift.cloudapps.paas.it
     Hello OpenShift!
 
 And:
 
-    openssl s_client -connect hello.cloudapps.example.com:443 \
+    openssl s_client -connect hello.cloudapps.paas.it:443 \
                        -CAfile /etc/openshift/master/ca.crt
     CONNECTED(00000003)
     depth=1 CN = openshift-signer@1430768237
     verify return:1
-    depth=0 CN = *.cloudapps.example.com
+    depth=0 CN = *.cloudapps.paas.it
     verify return:1
     [...]
 
@@ -1657,11 +1142,11 @@ and login to OpenShift:
 
     osc login -u alice \
     --certificate-authority=/etc/openshift/master/ca.crt \
-    --server=https://ose3-master.example.com:8443
+    --server=https://ose-master.paas.it:8443
 
 You'll interact with the tool as follows:
 
-    Authentication required for https://ose3-master.example.com:8443 (openshift)
+    Authentication required for https://ose-master.paas.it:8443 (openshift)
     Password:  <redhat>
     Login successful.
 
@@ -1674,7 +1159,7 @@ pods` and so forth should show her the same thing as `joe`:
 
     [alice]$ osc get pods
     POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose3-node1.example.com/192.168.133.3   name=hello-openshift   Running   14 minutes   
+    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   14 minutes   
                                  hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   14 minutes   
 
 However, she cannot make changes:
@@ -1888,7 +1373,7 @@ As the `joe` user, let's switch to the `sinatra` project:
 
 You should see:
 
-    Now using project "sinatra" on server "https://ose3-master.example.com:8443".
+    Now using project "sinatra" on server "https://ose-master.paas.it:8443".
 
 ### A Simple Code Example
 We'll be using a pre-build/configured code repository. This repository is an
@@ -2119,11 +1604,11 @@ Check to make sure it was created:
     osc get route
     NAME                 HOST/PORT                                   PATH      SERVICE        LABELS
     ruby-example         ruby-example.sinatra.router.default.local             ruby-example   generatedby=OpenShiftWebConsole,name=ruby-example
-    ruby-example-route   hello-sinatra.cloudapps.example.com                   ruby-example
+    ruby-example-route   hello-sinatra.cloudapps.paas.it                   ruby-example
 
 And now, you should be able to verify everything is working right:
 
-    curl http://hello-sinatra.cloudapps.example.com
+    curl http://hello-sinatra.cloudapps.paas.it
     Hello, Sinatra!
 
 If you want to be fancy, try it in your browser!
@@ -2235,7 +1720,7 @@ As `joe`, create a new project:
 
 This also changes you to use that project:
 
-    Now using project "quickstart" on server "https://ose3-master.example.com:8443".
+    Now using project "quickstart" on server "https://ose-master.paas.it:8443".
 
 ### A Quick Aside on Templates
 From the [OpenShift
@@ -2301,7 +1786,7 @@ cool thing is that route is not configurable at the moment. But, it's there!
 If you click "Browse" and then "Services" you will see that there is a route for
 the *frontend* service:
 
-    `integrated.cloudapps.example.com`
+    `integrated.cloudapps.paas.it`
 
 The build was started for us immediately after creating an instance of the
 template, so you can wait for it to finish. Feel free to check the build logs.
@@ -2312,7 +1797,7 @@ Once the build is complete, you can go on to the next step.
 Once the app is built, you should be able to visit the routed URL and
 actually use the application!
 
-    http://integrated.cloudapps.example.com
+    http://integrated.cloudapps.paas.it
 
 **Note: HTTPS will *not* work for this example because the form submission was
 written with HTTP links. Be sure to use HTTP. **
@@ -2429,7 +1914,7 @@ After a few moments:
 
     osc get route
     NAME               HOST/PORT                                       PATH      SERVICE            LABELS
-    ruby-hello-world   ruby-hello-world.wiring.cloudapps.example.com             ruby-hello-world 
+    ruby-hello-world   ruby-hello-world.wiring.cloudapps.paas.it             ruby-hello-world 
 
 Take a look at that hostname. It is
 
@@ -2549,7 +2034,7 @@ The output will look something like:
     "DATABASE_PORT_3306_TCP_ADDR=172.30.249.174",
 
 ### Revisit the Webpage
-Go ahead and revisit `http://ruby-hello-world.wiring.cloudapps.example.com` (or your appropriate
+Go ahead and revisit `http://ruby-hello-world.wiring.cloudapps.paas.it` (or your appropriate
 FQDN) in your browser, and you should see that the application is now fully
 functional!
 
@@ -2673,7 +2158,7 @@ To find the webhook URL, you can visit the web console, click into the
 project, click on *Browse* and then on *Builds*. You'll see two webhook
 URLs. Copy the *Generic* one. It should look like:
 
-    https://ose3-master.example.com:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
+    https://ose-master.paas.it:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
 
 **Note**: As of the cut of beta 4, the generic webhook URL was incorrect in the
 webUI. Note the correct syntax above. This is fixed already, but did not make it
@@ -2698,7 +2183,7 @@ You should see that the first build had completed. Then, `curl`:
 
     curl -i -H "Accept: application/json" \
     -H "X-HTTP-Method-Override: PUT" -X POST -k \
-    https://ose3-master.example.com:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
+    https://ose-master.paas.it:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
 
 And now `get build` again:
 
@@ -2714,7 +2199,7 @@ You can also check the web interface (logged in as `alice`) and see
 that the build is running. Once it is complete, point your web browser
 at the application:
 
-    http://ruby-hello-world.wiring.cloudapps.example.com/
+    http://ruby-hello-world.wiring.cloudapps.paas.it/
 
 You should see your big fat typo.
 
@@ -2782,11 +2267,11 @@ route for your app.
 
 ### Test Your App
 Once the app is built and the route is created, you should be able to access
-your application. If your route was `upload.cloudapps.example.com` and you went
+your application. If your route was `upload.cloudapps.paas.it` and you went
 to it, you'll notice that you just get the Apache "Welcome" page. That's because
 our app doesn't have an `index.html`. You'll need to go to:
 
-    upload.cloudapps.example.com/form.html
+    upload.cloudapps.paas.it/form.html
 
 You'll see that this is a simple file uploader app. Files go into a folder
 `/uploaded` and that folder's index can be viewed.
@@ -2931,7 +2416,7 @@ NFS mount:
         "accessModes": [ "ReadWriteMany" ],
         "nfs": {
             "path": "/var/export/vol1",
-            "server": "ose3-master.example.com"
+            "server": "ose-master.paas.it"
         }
       }
     }
@@ -3168,7 +2653,7 @@ Our old friend `curl` is back:
 
     curl -i -H "Accept: application/json" \
     -H "X-HTTP-Method-Override: PUT" -X POST -k \
-    https://ose3-master.example.com:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
+    https://ose-master.paas.it:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
 
 ### Watch the Build Logs
 Using the skills you have learned, watch the build logs for this build. If you
@@ -3412,13 +2897,13 @@ About a minute after the build completes, you should see something like the foll
 of `osc get pod` as `alice`:
 
     POD                                IP          CONTAINER(S)               IMAGE(S)                                                                                                                HOST                                    LABELS                                                                                                                  STATUS       CREATED         MESSAGE
-    database-2-rj72q                   10.1.0.15                                                                                                                                                      ose3-master.example.com/192.168.133.2   deployment=database-2,deploymentconfig=database,name=database                                                           Running      About an hour   
+    database-2-rj72q                   10.1.0.15                                                                                                                                                      ose-master.paas.it/192.168.100.2   deployment=database-2,deploymentconfig=database,name=database                                                           Running      About an hour   
                                                    ruby-helloworld-database   registry.access.redhat.com/openshift3_beta/mysql-55-rhel7                                                                                                                                                                                                                               Running      About an hour   
-    deployment-frontend-7-hook-4i8ch                                                                                                                                                                  ose3-node1.example.com/192.168.133.3    <none>                                                                                                                  Succeeded    41 seconds      
+    deployment-frontend-7-hook-4i8ch                                                                                                                                                                  ose-node1.paas.it/192.168.100.3    <none>                                                                                                                  Succeeded    41 seconds      
                                                    lifecycle                  172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Terminated   36 seconds      exit code 0
-    frontend-7-nnnxz                   10.1.1.24                                                                                                                                                      ose3-node1.example.com/192.168.133.3    deployment=frontend-7,deploymentconfig=frontend,name=frontend                                                           Running      29 seconds      
+    frontend-7-nnnxz                   10.1.1.24                                                                                                                                                      ose-node1.paas.it/192.168.100.3    deployment=frontend-7,deploymentconfig=frontend,name=frontend                                                           Running      29 seconds      
                                                    ruby-helloworld            172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Running      26 seconds      
-    ruby-example-7-build                                                                                                                                                                         ose3-master.example.com/192.168.133.2   build=ruby-example-7,buildconfig=ruby-example,name=ruby-example,template=application-template-stibuild   Succeeded    2 minutes       
+    ruby-example-7-build                                                                                                                                                                         ose-master.paas.it/192.168.100.2   build=ruby-example-7,buildconfig=ruby-example,name=ruby-example,template=application-template-stibuild   Succeeded    2 minutes       
                                                    sti-build                  openshift3_beta/ose-sti-builder:v0.5.2.2                                                                                                                                                                                                                                                Terminated   2 minutes       exit code 0
 
 Yes, it's ugly, thanks for reminding us.
@@ -3447,7 +2932,7 @@ using the `mysql` client and the environment variables (you would need the
 
 As `alice`, find your database:
 
-    [alice@ose3-master beta4]$ osc get service
+    [alice@ose-master beta4]$ osc get service
     NAME       LABELS    SELECTOR        IP(S)            PORT(S)
     database   <none>    name=database   172.30.108.133   5434/TCP
     frontend   <none>    name=frontend   172.30.229.16    5432/TCP
@@ -3529,7 +3014,7 @@ httpd. So we'll add on a service and route for web access.
 ### Test Your Application
 You should be able to visit:
 
-    http://wordpress.cloudapps.example.com
+    http://wordpress.cloudapps.paas.it
 
 Check it out!
 
@@ -3566,7 +3051,7 @@ have this label, so they didn't get deleted:
     osc get route
 
     NAME              HOST/PORT                         PATH      SERVICE                   LABELS
-    wordpress-route   wordpress.cloudapps.example.com             wordpress-httpd-service
+    wordpress-route   wordpress.cloudapps.paas.it             wordpress-httpd-service
 
 Labels will be useful for many things, including identification in the web console.
 
@@ -3595,7 +3080,7 @@ we can use the web console to simply isntantiate it in the desired way.
 We want to:
 
 * set the application name to *helloworld*
-* set the application hostname to *helloworld.cloudapps.example.com*
+* set the application hostname to *helloworld.cloudapps.paas.it*
 * set the Git URI to
     *https://github.com/jboss-developer/jboss-eap-quickstarts/*
 * set the Git ref to *6.4.x*
@@ -3659,7 +3144,7 @@ affect the success or failure of the build.
 We specified a route via defining the application hostname, so you should be able to
 visit your app at:
 
-    http://helloworld.cloudapps.example.com/jboss-helloworld
+    http://helloworld.cloudapps.paas.it/jboss-helloworld
 
 The reason that it is "/jboss-helloworld" and not just "/" is because the
 helloworld application does not use a "ROOT.war". If you don't understand this,
@@ -3703,7 +3188,7 @@ You will need to ensure the following, or fix the following:
 * That you also open port 53 (TCP and UDP) to allow DNS queries to hit the node
 
 Following this setup for dnsmasq will ensure that your wildcard domain works,
-that your hosts in the `example.com` domain resolve, that any other DNS requests
+that your hosts in the `paas.it` domain resolve, that any other DNS requests
 resolve via your configured local/remote nameservers, and that DNS resolution
 works inside of all of your containers. Don't forget to start and enable the
 `dnsmasq` service.
@@ -3713,22 +3198,22 @@ works inside of all of your containers. Don't forget to start and enable the
 You can query the local DNS on the master using `dig` (provided by the
 `bind-utils` package) to make sure it returns the correct records:
 
-    dig ose3-master.example.com
+    dig ose-master.paas.it
 
     ...
     ;; ANSWER SECTION:
-    ose3-master.example.com. 0  IN  A 192.168.133.2
+    ose-master.paas.it. 0  IN  A 192.168.100.2
     ...
 
 The returned IP should be the public interface's IP on the master. Repeat for
 your nodes. To verify the wildcard entry, simply dig an arbitrary domain in the
 wildcard space:
 
-    dig foo.cloudapps.example.com
+    dig foo.cloudapps.paas.it
 
     ...
     ;; ANSWER SECTION:
-    foo.cloudapps.example.com 0 IN A 192.168.133.2
+    foo.cloudapps.paas.it 0 IN A 192.168.100.2
     ...
 
 # APPENDIX - LDAP Authentication
@@ -3772,7 +3257,7 @@ To test the example LDAP service you can run the following:
                -s sub "(objectclass=*)" -w redhat \
                -h `osc get services | grep openldap-example-service | awk '{print $4}'`
 
-You should see ldif output that shows the example.com users.
+You should see ldif output that shows the paas.it users.
 
 ### Creating the Basic Auth service
 
@@ -3797,7 +3282,7 @@ certificates using OpenShift default CA.
 
 No arguments are required but the help output will show you the defaults:
 
-    --route    basicauthurl.example.com
+    --route    basicauthurl.paas.it
     --git-repo git://github.com/brenton/basicauthurl-example.git
 
 Once you run the helper script it will output the configuration changes
@@ -3815,13 +3300,13 @@ When the build finished you can run the following command to test that the
 Service is responding correctly:
 
     curl -v -u joe:redhat --cacert /etc/openshift/master/ca.crt \
-        --resolve basicauthurl.example.com:443:`osc get services | grep basicauthurl | awk '{print $4}'` \
-        https://basicauthurl.example.com/validate
+        --resolve basicauthurl.paas.it:443:`osc get services | grep basicauthurl | awk '{print $4}'` \
+        https://basicauthurl.paas.it/validate
 
 In that case in order for SNI to work correctly we had to trick curl with the `--resolve` flag.  If wildcard DNS is set up in your environment to point to the router then the following should test the service end to end:
 
     curl -u joe:redhat --cacert /etc/openshift/master/ca.crt \
-        https://basicauthurl.example.com/validate
+        https://basicauthurl.paas.it/validate
 
 If you've made the required changes to `/etc/openshift/master/master-config.yaml` and
 restarted `openshift-master` then you should now be able to log it with the
@@ -3918,9 +3403,9 @@ for common issues. This is very much still under development however.
 * All of a sudden authentication seems broken for non-admin users.  Whenever I run osc commands I see output such as:
 
         F0310 14:59:59.219087   30319 get.go:164] request
-        [&{Method:GET URL:https://ose3-master.example.com:8443/api/v1beta1/pods?namespace=demo
+        [&{Method:GET URL:https://ose-master.paas.it:8443/api/v1beta1/pods?namespace=demo
         Proto:HTTP/1.1 ProtoMajor:1 ProtoMinor:1 Header:map[] Body:<nil> ContentLength:0 TransferEncoding:[]
-        Close:false Host:ose3-master.example.com:8443 Form:map[] PostForm:map[]
+        Close:false Host:ose-master.paas.it:8443 Form:map[] PostForm:map[]
         MultipartForm:<nil> Trailer:map[] RemoteAddr: RequestURI: TLS:<nil>}]
         failed (401) 401 Unauthorized: Unauthorized
 
@@ -3935,14 +3420,14 @@ for common issues. This is very much still under development however.
 
         osc login \
         --certificate-authority=/etc/openshift/master/ca.crt \
-        --cluster=master --server=https://ose3-master.example.com:8443 \
+        --cluster=master --server=https://ose-master.paas.it:8443 \
         --namespace=[INSERT NAMESPACE HERE]
 
 * When using an "osc" command like "osc get pods" I see a "certificate signed by
     unknown authority error":
 
         F0212 16:15:52.195372   13995 create.go:79] Post
-        https://ose3-master.example.net:8443/api/v1beta1/pods?namespace=default:
+        https://ose-master.example.net:8443/api/v1beta1/pods?namespace=default:
         x509: certificate signed by unknown authority
 
     Check the value of $KUBECONFIG:
@@ -4010,7 +3495,7 @@ Restart rsyslog
 On your other hosts send openshift logs to your master by adding this line to
 `/etc/rsyslog.conf`
 
-    :programname, contains, "openshift" @@ose3-master.example.com
+    :programname, contains, "openshift" @@ose-master.paas.it
 
 Restart rsyslog
 
@@ -4100,7 +3585,7 @@ your master.
 ~~~
 HTTP_PROXY=http://USERNAME:PASSWORD@10.0.1.1:8080/
 HTTPS_PROXY=https://USERNAME:PASSWORD@10.0.0.1:8080/
-NO_PROXY=master.example.com
+NO_PROXY=master.paas.it
 ~~~
 
 It's important that the Master doesn't use the proxy to access itself so make
@@ -4279,7 +3764,7 @@ Next, we'll need to override the detected defaults if they are not what we expec
 To override the the defaults, you can set the variables in your inventory. For example, if using AWS and managing dns externally, you can override the host public hostname as follows:
 
     [masters]
-    ec2-52-6-179-239.compute-1.amazonaws.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}" openshift_public_hostname=ose3-master.public.example.com
+    ec2-52-6-179-239.compute-1.amazonaws.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}" openshift_public_hostname=ose-master.public.paas.it
 
 **Running ansible:**
 
@@ -4313,8 +3798,8 @@ To override the the defaults, you can set the variables in your inventory. For e
     export EC2_KEYPAIR=MY_KEYPAIR_NAME
     export RHN_USERNAME=MY_RHN_USERNAME
     export RHN_PASSWORD=MY_RHN_PASSWORD
-    export ROUTE_53_WILDCARD_ZONE=cloudapps.example.com
-    export ROUTE_53_HOST_ZONE=example.com
+    export ROUTE_53_WILDCARD_ZONE=cloudapps.paas.it
+    export ROUTE_53_HOST_ZONE=paas.it
 
 **Clone the openshift-ansible repo and configure helpful symlinks:**
     ansible-playbook clone_and_setup_repo.yml
@@ -4349,8 +3834,8 @@ prompted to accept an untrusted certificate which is not recommended.
 The CA is created on your master in `/etc/openshift/master/ca.crt`
 
     C:\Users\test\Downloads> osc --certificate-authority="ca.crt"
-    OpenShift server [[https://localhost:8443]]: https://ose3-master.example.com:8443
-    Authentication required for https://ose3-master.example.com:8443 (openshift)
+    OpenShift server [[https://localhost:8443]]: https://ose-master.paas.it:8443
+    Authentication required for https://ose-master.paas.it:8443 (openshift)
     Username: joe
     Password:
     Login successful.

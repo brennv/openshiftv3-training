@@ -5,7 +5,7 @@
     "name": "ruby-example-route"
   },
   "spec": {
-    "host": "hello-sinatra.cloudapps.example.com",
+    "host": "hello-sinatra.cloudapps.paas.it",
     "to": {
       "name": "ruby-example"
     }

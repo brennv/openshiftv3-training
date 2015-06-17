@@ -13,7 +13,7 @@
         "name": "wordpress-route"
       },
       "spec": {
-        "host": "wordpress.cloudapps.example.com",
+        "host": "wordpress.cloudapps.paas.it",
         "to": {
           "name": "wordpress-httpd-service"
         }

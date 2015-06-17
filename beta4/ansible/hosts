@@ -31,10 +31,10 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 
 # host group for masters
 [masters]
-ose3-master.example.com
+ose-master.paas.it
 
 # host group for nodes, includes region info
 [nodes]
-ose3-master.example.com openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
-ose3-node1.example.com openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
-ose3-node2.example.com openshift_node_labels="{'region': 'primary', 'zone': 'west'}"
+ose-master.paas.it openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+ose-node1.paas.it openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+ose-node2.paas.it openshift_node_labels="{'region': 'primary', 'zone': 'west'}"

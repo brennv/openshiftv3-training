@@ -4,7 +4,7 @@ cn: Joe Open
 sn: Open
 uid: joe
 userpassword: redhat
-mail: joe@example.com
+mail: joe@paas.it
 
 dn: uid=alice,ou=People,dc=example,dc=com
 objectclass: inetOrgPerson
@@ -12,4 +12,4 @@ cn: Alice Shift
 sn: Shift
 uid: alice
 userpassword: redhat
-mail: alice@example.com
+mail: alice@paas.it

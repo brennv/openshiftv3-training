@@ -13,7 +13,7 @@
     },
     {
       "apiVersion": "v1beta1",
-      "host": "wiring.cloudapps.example.com",
+      "host": "wiring.cloudapps.paas.it",
       "id": "sample-app-secure",
       "kind": "Route",
       "metadata": {

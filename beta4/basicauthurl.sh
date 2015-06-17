@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROUTE="basicauthurl.example.com"
+ROUTE="basicauthurl.paas.it"
 GIT_REPO="git://github.com/brenton/basicauthurl-example.git"
 FORCE=
 
@@ -13,7 +13,7 @@ config suitable for hosting LDAP authentication on OpenShift."
     echo ""
     echo "-r | --route       The hostname used to reach the LDAP authentication service."
     echo "                   This script will generated certificates that match this name."
-    echo "                   The default is basicauthurl.example.com"
+    echo "                   The default is basicauthurl.paas.it"
     echo ""
     echo "-g | --git-repo    The repository hosting basicauthurl.conf.  If you are OK"
     echo "                   with the beta4 defaults you can leave this blank to use"

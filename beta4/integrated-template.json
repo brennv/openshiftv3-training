@@ -47,7 +47,7 @@
         "creationTimestamp": null
       },
       "spec": {
-        "host": "integrated.cloudapps.example.com",
+        "host": "integrated.cloudapps.paas.it",
         "to": {
           "kind": "Service",
           "name": "frontend"
