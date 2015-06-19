@@ -76,12 +76,19 @@
   - [Creating and Wiring Disparate Components](#creating-and-wiring-disparate-components)
     - [Create a New Project](#create-a-new-project-1)
     - [Stand Up the Frontend](#stand-up-the-frontend)
-    - [Expose the Service](#expose-the-service)
-    - [Add the Database Template](#add-the-database-template)
-    - [Create the Database From the Web Console](#create-the-database-from-the-web-console)
+    - [Visit Your Application](#visit-your-application)
+    - [Create the Database Config](#create-the-database-config)
     - [Visit Your Application Again](#visit-your-application-again)
     - [Replication Controllers](#replication-controllers)
     - [Revisit the Webpage](#revisit-the-webpage)
+  - [Using Persistent Storage (Optional)](#using-persistent-storage-optional)
+    - [Export an NFS Volume](#export-an-nfs-volume)
+    - [NFS Firewall](#nfs-firewall)
+    - [Allow NFS Access in SELinux Policy](#allow-nfs-access-in-selinux-policy)
+    - [Create a PersistentVolume](#create-a-persistentvolume)
+    - [Claim the PersistentVolume](#claim-the-persistentvolume)
+    - [Use the Claimed Volume](#use-the-claimed-volume)
+    - [Restart the Frontend](#restart-the-frontend)
   - [Rollback/Activate and Code Lifecycle](#rollbackactivate-and-code-lifecycle)
     - [Fork the Repository](#fork-the-repository)
     - [Update the BuildConfig](#update-the-buildconfig)
@@ -91,23 +98,6 @@
     - [Start a Build with a Webhook](#start-a-build-with-a-webhook)
     - [Rollback](#rollback)
     - [Activate](#activate)
-  - [A Simple PHP Example](#a-simple-php-example)
-    - [Create a PHP Project](#create-a-php-project)
-    - [Build the App](#build-the-app)
-    - [Create a Route](#create-a-route)
-    - [Test Your App](#test-your-app)
-    - [Kill Your Pod](#kill-your-pod)
-  - [Using Persistent Storage (Optional)](#using-persistent-storage-optional)
-    - [Export an NFS Volume](#export-an-nfs-volume)
-    - [NFS Firewall](#nfs-firewall)
-    - [Allow NFS Access in SELinux Policy](#allow-nfs-access-in-selinux-policy)
-    - [Create a PersistentVolume](#create-a-persistentvolume)
-    - [Claim the PersistentVolume](#claim-the-persistentvolume)
-    - [Use the Claimed Volume](#use-the-claimed-volume)
-    - [Revisit and Reupload](#revisit-and-reupload)
-    - [Kill the Pod](#kill-the-pod)
-  - [More Exec Examples](#more-exec-examples)
-    - [Introduction to exec](#introduction-to-exec)
   - [Customized Build and Run Processes](#customized-build-and-run-processes)
     - [Add a Script](#add-a-script)
     - [Kick Off a Build](#kick-off-a-build)
@@ -128,7 +118,7 @@
     - [Instantiate the Template](#instantiate-the-template)
     - [Update the BuildConfig](#update-the-buildconfig-1)
     - [Watch the Build](#watch-the-build)
-    - [Visit Your Application](#visit-your-application)
+    - [Visit Your Application](#visit-your-application-1)
   - [Conclusion](#conclusion)
 - [APPENDIX - DNSMasq setup](#appendix---dnsmasq-setup)
     - [Verifying DNSMasq](#verifying-dnsmasq)
@@ -295,13 +285,8 @@ You will need to have a wildcard for a DNS zone resolve, ultimately, to the IP a
 *.cloudapps.paas.it. 300 IN  A 192.168.100.2
 ```
 
-We will want default routes (we'll talk about these later) to automatically get to this sub-domain so, `/etc/sysconfig/openshift-master` on ose-master has been modified with the following:
-
-    OPENSHIFT_ROUTE_SUBDOMAIN=cloudapps.paas.it
-
-
 ## Openshift Enterprise Installation
-While the ose installer is being finalized, your learning environment offers a pre-installed ose v3 based on the beta4 software.  Once the environment has started, you should find the following from `ravshello`:
+While the ose installer is being finalized, your learning environment offers a pre-installed ose v3 based on the beta4 softare.  Once the environment has started, you should find the following from `ravshello`:
 ```
   ose-workstation
      State:              STARTED
@@ -360,36 +345,19 @@ ose-node2.paas.it    kubernetes.io/hostname=ose-node2.paas.it,region=primary,zon
 
 Notice the lables called "regions" and "zones" ? Let's talk about those concepts now.
 
-
 ## Regions and Zones
-If you think you're about to learn how to configure regions and zones in
-OpenShift 3, you're only partially correct.
+If you think you're about to learn how to configure regions and zones in OpenShift 3, you're only partially correct.
 
-In OpenShift 2, we introduced the specific concepts of "regions" and "zones" to
-enable organizations to provide some topologies for application resiliency. Apps
-would be spread throughout the zones in a region and, depending on the way you
-configured OpenShift, you could make different regions accessible to users.
+In OpenShift 2, we introduced the specific concepts of "regions" and "zones" to enable organizations to provide some topologies for application resiliency. Apps would be spread throughout the zones in a region and, depending on the way you configured OpenShift, you could make different regions accessible to users.
 
-The reason that you're only "partially" correct in your assumption is that, for
-OpenShift 3, Kubernetes doesn't actually care about your topology. In other
-words, OpenShift is "topology agnostic". In fact, OpenShift 3 provides advanced
-controls for implementing whatever topologies you can dream up, leveraging
-filtering and affinity rules to ensure that parts of applications (pods) are
-either grouped together or spread apart.
+The reason that you're only "partially" correct in your assumption is that, for OpenShift 3, Kubernetes doesn't actually care about your topology. In other words, OpenShift is "topology agnostic". In fact, OpenShift 3 provides advanced controls for implementing whatever topologies you can dream up, leveraging filtering and affinity rules to ensure that parts of applications (pods) are either grouped together or spread apart.
 
-For the purposes of a simple example, we'll be sticking with the "regions" and
-"zones" theme. But, as you go through these examples, think about what other
-complex topologies you could implement. Perhaps "secure" and "insecure" hosts,
-or other topologies.
+For the purposes of a simple example, we'll be sticking with the "regions" and "zones" theme. But, as you go through these examples, think about what other complex topologies you could implement. Perhaps "secure" and "insecure" hosts, or other topologies.
 
 First, we need to talk about the "scheduler" and its default configuration.
 
 ### Scheduler and Defaults
-The "scheduler" is essentially the OpenShift master. Any time a pod needs to be
-created (instantiated) somewhere, the master needs to figure out where to do
-this. This is called "scheduling". The default configuration for the scheduler
-looks like the following JSON (although this is embedded in the OpenShift code
-and you won't find this in a file):
+The "scheduler" is essentially the OpenShift master. Any time a pod needs to be created (instantiated) somewhere, the master needs to figure out where to do this. This is called "scheduling". The default configuration for the scheduler looks like the following JSON (although this is embedded in the OpenShift code and you won't find this in a file):
 
     {
       "predicates" : [
@@ -404,14 +372,9 @@ and you won't find this in a file):
       ]
     }
 
-When the scheduler tries to make a decision about pod placement, first it goes
-through "predicates", which essentially filter out the possible nodes we can
-choose. Note that, depending on your predicate configuration, you might end up
-with no possible nodes to choose. This is totally OK (although generally not
-desired).
+When the scheduler tries to make a decision about pod placement, first it goes through "predicates", which essentially filter out the possible nodes we can choose. Note that, depending on your predicate configuration, you might end up with no possible nodes to choose. This is totally OK (although generally not desired).
 
-These default options are documented in the link above, but the quick overview
-is:
+These default options are documented in the link above, but the quick overview is:
 
 * Place pod on a node that has enough resources for it (duh)
 * Place pod on a node that doesn't have a port conflict (duh)
@@ -422,10 +385,7 @@ And some more obscure ones:
 * Place pod on a node whose `NodeSelector` matches
 * Place pod on a node whose hostname matches the `Host` attribute value
 
-The next thing is, of the available nodes after the filters are applied, how do
-we select the "best" one. This is where "priorities" come in. Long story short,
-the various priority functions each get a score, multiplied by the weight, and
-the node with the highest score is selected to host the pod.
+The next thing is, of the available nodes after the filters are applied, how do we select the "best" one. This is where "priorities" come in. Long story short, the various priority functions each get a score, multiplied by the weight, and the node with the highest score is selected to host the pod.
 
 Again, the defaults are:
 
@@ -433,35 +393,24 @@ Again, the defaults are:
 * Spread services around - minimize the number of pods in the same service on
     the same node
 
-And, for an extremely detailed explanation about what these various
-configuration flags are doing, check out:
+And, for an extremely detailed explanation about what these various configuration flags are doing, check out:
 
     http://docs.openshift.org/latest/admin_guide/scheduler.html
 
-In a small environment, these defaults are pretty sane. Let's look at one of the
-important predicates (filters) before we move on to "regions" and "zones".
+In a small environment, these defaults are pretty sane. Let's look at one of the important predicates (filters) before we move on to "regions" and "zones".
 
 ### The NodeSelector
-`NodeSelector` is a part of the Pod data model. And, if we think back to our pod
-definition, there was a "label", which is just a key:value pair. In the case of
-a `NodeSelector`, our labels (key:value pairs) are used to help us try to find
-nodes that match, assuming that:
+`NodeSelector` is a part of the Pod data model. And, if we think back to our pod definition, there was a "label", which is just a key:value pair. In the case of a `NodeSelector`, our labels (key:value pairs) are used to help us try to find nodes that match, assuming that:
 
 * The scheduler is configured to MatchNodeSelector
 * The end user creating the pod knows which labels are out there
 
-But this use case is also pretty simplistic. It doesn't really allow for a
-topology, and there's not a lot of logic behind it. Also, if I specify a
-NodeSelector label when using MatchNodeSelector and there are no matching nodes,
-my workload will never get scheduled. Bummer.
+But this use case is also pretty simplistic. It doesn't really allow for a topology, and there's not a lot of logic behind it. Also, if I specify a NodeSelector label when using MatchNodeSelector and there are no matching nodes, my workload will never get scheduled. Bummer.
 
 How can we make this more intelligent? We'll finally use "regions" and "zones".
 
 ### Customizing the Scheduler Configuration
-The Ansible installer is configured to understand "regions" and "zones" as a
-matter of convenience. However, for the master (scheduler) to actually do
-something with them requires changing from the default configuration Take a look
-at `/etc/openshift/master/master-config.yaml` and find the line with `schedulerConfigFile`.
+The learning environment provided is pre-configured to understand "regions" and "zones" as a matter of convenience. However, for the master (scheduler) to actually do something with them requires changing from the default configuration Take a look at `/etc/openshift/master/master-config.yaml` on ose-master and find the line with `schedulerConfigFile`.
 
 You should see:
 
@@ -483,11 +432,9 @@ following content:
       ]
     }
 
-To quickly review the above (this explanation sort of assumes that you read the
-scheduler documentation, but it's not critically important):
+To quickly review the above (this explanation sort of assumes that you read the scheduler documentation, but it's not critically important):
 
-* Filter out nodes that don't fit the resources, don't have the ports, or have
-    disk conflicts
+* Filter out nodes that don't fit the resources, don't have the ports, or have disk conflicts
 * If the pod specifies a label with the key "region", filter nodes by the value.
 
 So, if we have the following nodes and the following labels:
@@ -496,8 +443,7 @@ So, if we have the following nodes and the following labels:
 * Node 2 -- "region":"primary"
 * Node 3 -- "region":"primary"
 
-If we try to schedule a pod that has a `NodeSelector` of "region":"primary",
-then only Node 1 and Node 2 would be considered.
+If we try to schedule a pod that has a `NodeSelector` of "region":"primary", then only Node 1 and Node 2 would be considered.
 
 OK, that takes care of the "region" part. What about the "zone" part?
 
@@ -507,63 +453,45 @@ Our priorities tell us to:
 * Score any nodes who don't already have a pod in this service higher
 * Score any nodes whose zone label's value **does not** match higher
 
-Why do we score a zone that **doesn't** match higher? Note that the definition
-for the Zone priority is a `serviceAntiAffinity` -- anti affinity. In this case,
-our anti affinity rule helps to ensure that we try to get nodes from *different*
-zones to take our pod.
+Why do we score a zone that **doesn't** match higher? Note that the definition for the Zone priority is a `serviceAntiAffinity` -- anti affinity. In this case, our anti affinity rule helps to ensure that we try to get nodes from *different* zones to take our pod.
 
-If we consider that our "primary" region might be a certain datacenter, and that
-each "zone" in that datacenter might be on its own power system with its own
-dedicated networking, this would ensure that, within the datacenter, pods of an
-application would be spread across power/network segments.
+If we consider that our "primary" region might be a certain datacenter, and that each "zone" in that datacenter might be on its own power system with its own dedicated networking, this would ensure that, within the datacenter, pods of an application would be spread across power/network segments.
 
-The documentation link has some more complicated examples. The topoligical
-possibilities are endless!
+The documentation link has some more complicated examples. The topoligical possibilities are endless!
 
 ### Node Labels
-The assignments of "regions" and "zones" at the node-level are handled by labels
-on the nodes. You can look at how the labels were implemented by doing:
+The assignments of "regions" and "zones" at the node-level are handled by labels on the nodes. You can look at how the labels were implemented by running on the ose-master:
 
-    osc get nodes
+```
+[root@ose-master ~]# osc get nodes
+NAME                 LABELS                                                                STATUS
+ose-master.paas.it   kubernetes.io/hostname=ose-master.paas.it,region=infra,zone=default   Ready
+ose-node1.paas.it    kubernetes.io/hostname=ose-node1.paas.it,region=primary,zone=east     Ready
+ose-node2.paas.it    kubernetes.io/hostname=ose-node2.paas.it,region=primary,zone=west     Ready
+```
+**NOTE:** For those familar with kubctl commands you can run `openshfit kube get nodes` to get similar output
 
-    NAME                      LABELS                                                                     STATUS
-    ose-master.paas.it   kubernetes.io/hostname=ose-master.paas.it,region=infra,zone=default   Ready
-    ose-node1.paas.it    kubernetes.io/hostname=ose-node1.paas.it,region=primary,zone=east     Ready
-    ose-node2.paas.it    kubernetes.io/hostname=ose-node2.paas.it,region=primary,zone=west     Ready
+At this point we have a running OpenShift environment across three hosts, with one master and three nodes, divided up into two regions -- "*infra*structure" and "primary".
 
-At this point we have a running OpenShift environment across three hosts, with
-one master and three nodes, divided up into two regions -- "*infra*structure"
-and "primary".
-
-From here we will start to deploy "applications" and other resources into
-OpenShift.
+From here we will start to deploy "applications" and other resources into OpenShift.
 
 ## Useful OpenShift Logs
-RHEL 7 uses `systemd` and `journal`. As such, looking at logs is not a matter of
-`/var/log/messages` any longer. You will need to use `journalctl`.
+RHEL 7 uses `systemd` and `journal`. As such, looking at logs is not a matter of `/var/log/messages` any longer. You will need to use `journalctl`.
 
-Since we are running all of the components in higher loglevels, it is suggested
-that you use your terminal emulator to set up windows for each process. If you
-are familiar with the Ruby Gem, `tmuxinator`, there is a config file in the
-training repository. Otherwise, you should run each of the following in its own
-window:
+Since we are running all of the components in higher loglevels, it is suggested that you use your terminal emulator to set up windows for each process. If you are familiar with the Ruby Gem, `tmuxinator`, there is a config file in the training repository. Otherwise, you should run each of the following in its own window:
 
     journalctl -f -u openshift-master
     journalctl -f -u openshift-node
 
-**Note:** You will want to do this on the other nodes, but you won't need the
-"-master" service. You may also wish to watch the Docker logs, too.
+**Note:** You will want to do this on the other nodes, but you won't need the "-master" service. You may also wish to watch the Docker logs, too.
 
-**Note:** There is an appendix on configuring [Log
-Aggregation](#appendix---infrastructure-log-aggregation)
+**Note:** There is an appendix on configuring [Log Aggregation](#appendix---infrastructure-log-aggregation)
 
 ## Auth, Projects, and the Web Console
 ### Configuring htpasswd Authentication
-OpenShift v3 supports a number of mechanisms for authentication. The simplest
-use case for our testing purposes is `htpasswd`-based authentication.
+OpenShift v3 supports a number of mechanisms for authentication. The simplest use case for our testing purposes is `htpasswd`-based authentication.
 
-To start, we will need the `htpasswd` binary, which is made available by
-installing:
+To start, we will need the `htpasswd` binary, which is made available by installing on ose-master:
 
     yum -y install httpd-tools
 
@@ -573,7 +501,7 @@ From there, we can create a password for our users, Joe and Alice:
     htpasswd -b /etc/openshift/openshift-passwd joe redhat
     htpasswd -b /etc/openshift/openshift-passwd alice redhat
 
-Remember, you created these users previously.
+**NOTE:** `joe` and `alice` are already system users on ose-master.
 
 The OpenShift configuration is kept in a YAML file which currently lives at
 `/etc/openshift/master/master-config.yaml`. Ansible was configured to edit
@@ -582,7 +510,7 @@ the `oauthConfig`'s `identityProviders` stanza so that it looks like the followi
     identityProviders:
     - challenge: true
       login: true
-      name: htpasswd_auth
+      name: apache_auth
       provider:
         apiVersion: v1
         file: /etc/openshift/openshift-passwd
@@ -637,6 +565,11 @@ the password (`redhat`) you set earlier.
 Once you are in, click the *OpenShift 3 Demo* project. There really isn't
 anything of interest at the moment, because we haven't put anything into our
 project.
+
+After verifying your demo project is Active, run the following on ose-workstation to verify your work:
+```
+[root@ose-workstation ~]# kc-osev3.bash grade1
+```
 
 ## Your First Application
 At this point you essentially have a sufficiently-functional V3 OpenShift
@@ -752,6 +685,13 @@ Review your limit ranges
     Pod             cpu             10m     500m    -
     Container       cpu             10m     500m    100m
     Container       memory          5Mi     750Mi   100Mi
+
+
+After reviewing your limit ranges, run the following on ose-workstation to verify your work:
+```
+[root@ose-workstation ~]# kc-osev3.bash grade2
+```
+
 
 ### Login
 Since we have taken the time to create the *joe* user as well as a project for
@@ -880,8 +820,8 @@ Issue a `get pods` to see the details of how it was defined:
 
     osc get pods
     POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   16 seconds   
-                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   2 seconds   
+    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   16 seconds
+                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   2 seconds
 
 The output of this command shows all of the Docker containers in a pod, which
 explains some of the spacing.
@@ -908,6 +848,11 @@ the node where the pod is running*
     Hello OpenShift!
 
 Hooray!
+
+After testing with curl, run the following on ose-workstation to verify your work:
+```
+[root@ose-workstation ~]# kc-osev3.bash grade3
+```
 
 ### Looking at the Pod in the Web Console
 Go to the web console and go to the *Overview* tab for the *OpenShift 3 Demo*
@@ -952,7 +897,7 @@ fourth, because the quota on this project limits us to three total pods.
 
 As `joe`, go ahead and use `osc create` and you will see the following:
 
-    osc create -f hello-quota.json 
+    osc create -f hello-quota.json
     pods/hello-openshift-1
     pods/hello-openshift-2
     pods/hello-openshift-3
@@ -1142,13 +1087,13 @@ did not run this command in the folder where you created it.
 
 Let's check the pods:
 
-    osc get pods 
+    osc get pods
 
 In the output, you should see the router pod status change to "running" after a
 few moments (it may take up to a few minutes):
 
     POD              IP         CONTAINER(S)   IMAGE(S)                                                                 HOST                                    LABELS                                                      STATUS    CREATED      MESSAGE
-    router-1-cutck   10.1.0.4                                                                                           ose-master.paas.it/192.168.100.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes   
+    router-1-cutck   10.1.0.4                                                                                           ose-master.paas.it/192.168.100.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes
                                 router         registry.access.redhat.com/openshift3_beta/ose-haproxy-router:v0.5.2.2                                                                                                       Running   18 minutes
 
 Note: This output is huge, wide, and ugly. We're working on making it nicer. You
@@ -1163,6 +1108,11 @@ OpenShift environment is currently configured with an *infra*structure region
 called "infra". This `--selector` argument asks OpenShift:
 
 *Please place all of these router pods in the infra region*.
+
+After checking your router placement and status, run the following on ose-workstation to verify your work:
+```
+[root@ose-workstation ~]# kc-osev3.bash grade4
+```
 
 ### Router Placement By Region
 In the very beginning of the documentation, we indicated that a wildcard DNS
@@ -1201,7 +1151,7 @@ admins.
 
 Ensure that port 1936 is accessible and visit:
 
-    http://admin:cEVu2hUb@ose-master.paas.it:1936 
+    http://admin:cEVu2hUb@ose-master.paas.it:1936
 
 to view your router stats.
 
@@ -1375,7 +1325,7 @@ common resources existing in the current project:
 
     osc status
     In project OpenShift 3 Demo (demo)
-    
+
     service hello-openshift-service (172.30.197.132:27017 -> 8080)
       hello-openshift deploys docker.io/openshift/hello-openshift:v0.4.3
         #1 deployed 3 minutes ago - 1 pod
@@ -1480,6 +1430,11 @@ certificate in order to validate the SSL certificate presented to us by the
 router. With a CA or all certificates signed by a trusted authority, it would
 not be necessary to specify the CA everywhere.
 
+Run the following on ose-workstation to verify complete pod-service-route example application is functioning:
+```
+[root@ose-workstation ~]# kc-osev3.bash grade5
+```
+
 ### The Web Console
 Take a moment to look in the web console to see if you can find everything that
 was just created.
@@ -1521,8 +1476,8 @@ pods` and so forth should show her the same thing as `joe`:
 
     [alice]$ osc get pods
     POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   14 minutes   
-                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   14 minutes   
+    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   14 minutes
+                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   14 minutes
 
 However, she cannot make changes:
 
@@ -1722,7 +1677,7 @@ As the `joe` user, we will create a new project to put our first S2I example
 into:
 
     osc new-project sinatra --display-name="Sinatra Example" \
-    --description="This is your first build on OpenShift 3" 
+    --description="This is your first build on OpenShift 3"
 
 Logged in as `joe` in the web console, if you click the OpenShift image you
 should be returned to the project overview page where you will see the new
@@ -2193,136 +2148,78 @@ argument's sake, this could have just as easily been brand new vanilla code.
 However, to make things faster, we'll start with an application that already is
 looking for a DB, but won't fail spectacularly if one isn't found.
 
-The frontend application comes from the following code repository:
+Go ahead and process the frontend template and then examine it:
 
-    https://github.com/openshift/ruby-hello-world
+    osc process -f frontend-template.json > frontend-config.json
 
-We want to use the beta branch. We can use the `new-app` command to help get
-this started for us. As `alice` go ahead and do the following:
+**Note:** If you are using a different domain, you will need to edit the route
+before running `create`.
 
-    osc new-app -i openshift/ruby https://github.com/openshift/ruby-hello-world#beta4
+In the config, you will see that a DB password and other parameters have been
+generated (remember the template and parameter info from earlier?).
 
-You should see something like the following:
+Go ahead and create the configuration:
 
-    imageStreams/ruby-hello-world
-    buildConfigs/ruby-hello-world
-    deploymentConfigs/ruby-hello-world
-    services/ruby-hello-world
-    A build was created - you can run `osc start-build ruby-hello-world` to
-    start it.
-    Service "ruby-hello-world" created at 172.30.39.167 with port mappings 8080.
+    osc create -f frontend-config.json
 
-The syntax of the command tells us:
+As soon as you create this, all of the resources will be created *and* a build
+will be started for you. Let's go ahead and wait until this build completes
+before continuing.
 
-* I want to create a new application
-* using the ruby builder image in the openshift namespace
-* based off of the code in a git repository
-* and using the "beta4" branch
+### Visit Your Application
+Once the new build is finished and the frontend service's endpoint has been
+updated, visit your application. The frontend configuration contained a route
+for `wiring.cloudapps.paas.it`. You should see a note that the database is
+missing. So, let's create it!
 
-**Note:** The beta4 state of the `new-app` subcommand doesn't support the
-`--selector` argument, so your frontend pods will potentially land in the
-"infrastructure" region. You can edit the DeploymentConfig to specify a
-nodeSelector (look at the sample JSON earlier in the training material) but it's
-not important. All the other JSON examples included nodeSelectors so you didn't
-need to worry about it previously.
+### Create the Database Config
+Remember, `osc process` will examine a template, generate any desired
+parameters, and spit out a JSON `config`uration that can be `create`d with
+`osc`.
 
-**Note:** There is a bug in the `new-app` subcommand:
+Processing the template for the db will generate some values for the DB root
+user and password, but they don't actually match what was previously generated
+when we set up the front-end. In the "quickstart" example, we generated these
+values and used them for both the frontend and the backend at the exact same
+time. Since we are processing them separately now, some manual intervention is
+required.
 
-    https://bugzilla.redhat.com/show_bug.cgi?id=1232003
+This template uses the Red Hat MySQL Docker container, which knows to take some
+env-vars when it fires up (eg: the MySQL user / password). More information on
+the upstream of this container can be found here:
 
-You will need to manually update the BuildConfig to add the `openshift`
-namespace:
+    https://github.com/openshift/mysql
 
-    osc edit bc/ruby-hello-world
+Take a look at the frontend configuration (`frontend-config.json`) and find the
+value for `MYSQL_USER`. For example, `userMXG`. Then insert these values into
+the template using the `process` command and create the result:
 
-Make your `strategy` section look like the following:
+    grep -A 1 MYSQL_* frontend-config.json
+                                                "name": "MYSQL_USER",
+                                                "key": "MYSQL_USER",
+                                                "value": "userMXG"
+    --
+                                                "name": "MYSQL_PASSWORD",
+                                                "key": "MYSQL_PASSWORD",
+                                                "value": "slDrggRv"
+    --
+                                                "name": "MYSQL_DATABASE",
+                                                "key": "MYSQL_DATABASE",
+                                                "value": "root"
 
-      strategy:
-        sourceStrategy:
-          from:
-            kind: ImageStreamTag
-            name: ruby:latest
-            namespace: openshift
+    osc process -f db-template.json \
+        -v MYSQL_USER=userMXG,MYSQL_PASSWORD=slDrggRv,MYSQL_DATABASE=root \
+        | osc create -f -
 
-Save and exit the editor.
-
-Since we know that we want to talk to a database eventually, let's take a moment
-to add the environment variables for it. Conveniently, there is an `env`
-subcommand to `osc`. As `alice`, we can use it like so:
-
-    osc env dc/ruby-hello-world MYSQL_USER=root MYSQL_PASSWORD=redhat MYSQL_DATABASE=mydb
-
-If you want to double-check, you can verify using the following:
-
-    osc env dc/ruby-hello-world --list
-    # deploymentconfigs ruby-hello-world, container ruby-hello-world
-    MYSQL_USER=root
-    MYSQL_PASSWORD=redhat
-    MYSQL_DATABASE=mydb
-
-Go ahead and kick off your build from the web console. Take a look at your
-deployment there, too. You should see the environment variables as well.
-
-### Expose the Service
-The `osc` command has a nifty subcommand called `expose` that will take a
-service and automatically create a route for us. It will do this in the defined
-cloud domain and in the current project as an additional "namespace" of sorts.
-For example, the steps above resulted in a service called "ruby-hello-world". We
-can use `expose` against it:
-
-    osc expose service ruby-hello-world
-
-After a few moments:
-
-    osc get route
-    NAME               HOST/PORT                                       PATH      SERVICE            LABELS
-    ruby-hello-world   ruby-hello-world.wiring.cloudapps.paas.it             ruby-hello-world 
-
-Take a look at that hostname. It is
-
-* the service name
-* the namespace name
-* the route domain
-
-all concatenated together. In the future the `expose` command will allow a
-hostname to be specified directly.
-
-Now you should be able to access your application with your browser! Go ahead
-and do that now. You'll notice that the frontend is happy to run without a
-database, but is not all that exciting. We'll fix that in a moment.
-
-### Add the Database Template
-Earlier we added a template to the `openshift` namespace to make it available
-for all users. Now we'll demonstrate adding a template to our own project. In
-the `beta4` folder there is a `mysql-template.json` file. As `alice`, go ahead
-and add it to your project:
-
-    osc create -f mysql-template.json
-
-You'll see:
-
-    templates/mysql-ephemeral
-
-### Create the Database From the Web Console
-Go to the web console and make sure you are logged in as `joe` and using the
-`wiring` project. You should see your front-end already there. Click the
-"Create..." button and then the "Browse all templates..." button. You should see
-the `mysql-ephemeral` template. Click it and then click "Select template".
-
-You will need to edit the parameters of this template, because the defaults will
-not work for us. Change the `DATABASE_SERVICE_NAME` to be "database", because
-that is what service the frontend expects to connect to. Make sure that the
-MySQL user, password and database match whatever values you specified in the
-previous labs.
-
-Click the "Create" button when you are ready.
+`osc process` can be passed values for parameters, which will override
+auto-generation.
 
 It may take a little while for the MySQL container to download (if you didn't
 pre-fetch it). It's a good idea to verify that the database is running before
 continuing.  If you don't happen to have a MySQL client installed you can still
 verify MySQL is running with curl:
 
-    curl `osc get services | grep database | awk '{print $4}'`:3306
+    curl `osc get services | grep database | awk '{print $4}'`:5434
 
 MySQL doesn't speak HTTP so you will see garbled output like this (however,
 you'll know your database is running!):
@@ -2349,7 +2246,7 @@ The replication controller is configured to ensure that we always have the
 desired number of replicas (instances) running. We can look at how many that
 should be:
 
-    osc describe rc ruby-hello-world-1
+    osc describe rc frontend-1
 
 So, if we kill the pod, the RC will detect that, and fire it back up. When it
 gets fired up this time, it will then have the `DATABASE_SERVICE_HOST` value,
@@ -2358,300 +2255,61 @@ longer see the database error!
 
 As `alice`, go ahead and find your frontend pod, and then kill it:
 
-    osc delete pod `osc get pod | grep -e "hello-world-[0-9]" | grep -v build | awk '{print $1}'`
+    osc delete pod `osc get pod | grep front | awk '{print $1}'`
 
 You'll see something like:
 
-    pods/ruby-hello-world-1-wcxiw
+    pods/frontend-1-b6bgy
 
 That was the generated name of the pod when the replication controller stood it
-up the first time.
+up the first time. You also see some deployment hook pods. We will talk about
+deployment hooks a bit later.
 
 After a few moments, we can look at the list of pods again:
 
-    osc get pod | grep world
+    osc get pod | grep front
 
 And we should see a different name for the pod this time:
 
-    ruby-hello-world-1-4ikbl
+    frontend-1-0fs20
 
 This shows that, underneath the covers, the RC restarted our pod. Since it was
 restarted, it should have a value for the `DATABASE_SERVICE_HOST` environment
 variable. Go to the node where the pod is running, and find the Docker container
 id as `root`:
 
-    docker inspect `docker ps | grep hello-world | grep run | awk \
+    docker inspect `docker ps | grep wiring | grep front | grep run | awk \
     '{print $1}'` | grep DATABASE
 
 The output will look something like:
 
-    "MYSQL_DATABASE=mydb",
-    "DATABASE_SERVICE_PORT_MYSQL=3306",
-    "DATABASE_SERVICE_PORT=3306",
-    "DATABASE_PORT=tcp://172.30.249.174:3306",
-    "DATABASE_PORT_3306_TCP=tcp://172.30.249.174:3306",
-    "DATABASE_PORT_3306_TCP_PROTO=tcp",
-    "DATABASE_SERVICE_HOST=172.30.249.174",
-    "DATABASE_PORT_3306_TCP_PORT=3306",
-    "DATABASE_PORT_3306_TCP_ADDR=172.30.249.174",
+    "MYSQL_DATABASE=root",
+    "DATABASE_PORT_5434_TCP_ADDR=172.30.17.106",
+    "DATABASE_PORT=tcp://172.30.17.106:5434",
+    "DATABASE_PORT_5434_TCP=tcp://172.30.17.106:5434",
+    "DATABASE_PORT_5434_TCP_PROTO=tcp",
+    "DATABASE_SERVICE_HOST=172.30.17.106",
+    "DATABASE_SERVICE_PORT=5434",
+    "DATABASE_PORT_5434_TCP_PORT=5434",
 
 ### Revisit the Webpage
-Go ahead and revisit `http://ruby-hello-world.wiring.cloudapps.paas.it` (or your appropriate
+Go ahead and revisit `http://wiring.cloudapps.paas.it` (or your appropriate
 FQDN) in your browser, and you should see that the application is now fully
 functional!
 
-## Rollback/Activate and Code Lifecycle
-Not every coder is perfect, and sometimes you want to rollback to a previous
-incarnation of your application. Sometimes you then want to go forward to a
-newer version, too.
+**Note:** There is a process to deploy instances of templates that we already
+used in the "quickstart" case. For some reason, the MySQL database template
+doesn't deploy successfully with the current example. Otherwise we would have
+done 100% of this through the webUI.
 
-The next few labs require that you have a Github account. We will take Alice's
-"wiring" application and modify its front-end and then rebuild. We'll roll-back
-to the original version, and then go forward to our re-built version.
+Here's the bug for reference:
 
-### Fork the Repository
-Our wiring example's frontend service uses the following Github repository:
-
-    https://github.com/openshift/ruby-hello-world
-
-Go ahead and fork this into your own account by clicking the *Fork* Button at
-the upper right.
-
-### Update the BuildConfig
-Remember that a `BuildConfig`(uration) tells OpenShift how to do a build.
-Still as the `alice` user, take a look at the current `BuildConfig` for our
-frontend:
-
-    osc get buildconfig ruby-example -o yaml
-    apiVersion: v1beta1
-    kind: BuildConfig
-    metadata:
-      creationTimestamp: 2015-03-10T15:40:26-04:00
-      labels:
-        template: application-template-stibuild
-      name: ruby-example
-      namespace: wiring
-      resourceVersion: "831"
-      selfLink: /osapi/v1beta1/buildConfigs/ruby-example?namespace=wiring
-      uid: 4cff2e5e-c75d-11e4-806e-525400b33d1d
-    parameters:
-      output:
-        to:
-          kind: ImageStream
-          name: origin-ruby-sample
-      source:
-        git:
-          uri: git://github.com/openshift/ruby-hello-world.git
-          ref: beta4
-        type: Git
-      strategy:
-        stiStrategy:
-          builderImage: openshift/ruby-20-rhel7
-          image: openshift/ruby-20-rhel7
-        type: STI
-    triggers:
-    - github:
-        secret: secret101
-      type: github
-    - generic:
-        secret: secret101
-      type: generic
-    - imageChange:
-        from:
-          name: ruby-20-rhel7
-        image: openshift/ruby-20-rhel7
-        imageRepositoryRef:
-          name: ruby-20-rhel7
-        tag: latest
-      type: imageChange
-
-As you can see, the current configuration points at the
-`openshift/ruby-hello-world` repository. Since you've forked this repo, let's go
-ahead and re-point our configuration. Our friend `osc edit` comes to the rescue
-again:
-
-    osc edit bc ruby-example
-
-Change the "uri" reference to match the name of your Github
-repository. Assuming your github user is `alice`, you would point it
-to `git://github.com/alice/ruby-hello-world.git`. Save and exit
-the editor.
-
-If you again run `osc get buildconfig ruby-example -o yaml` you should see
-that the `uri` has been updated.
-
-### Change the Code
-Github's web interface will let you make edits to files. Go to your forked
-repository (eg: https://github.com/alice/ruby-hello-world), select the `beta3`
-branch, and find the file `main.erb` in the `views` folder.
-
-Change the following HTML:
-
-    <div class="page-header" align=center>
-      <h1> Welcome to an OpenShift v3 Demo App! </h1>
-    </div>
-
-To read (with the typo):
-
-    <div class="page-header" align=center>
-      <h1> This is my crustom demo! </h1>
-    </div>
-
-You can edit code on Github by clicking the pencil icon which is next to the
-"History" button. Provide some nifty commit message like "Personalizing the
-application."
-
-If you know how to use Git/Github, you can just do this "normally".
-
-### Start a Build with a Webhook
-Webhooks are a way to integrate external systems into your OpenShift
-environment so that they can fire off OpenShift builds. Generally
-speaking, one would make code changes, update the code repository, and
-then some process would hit OpenShift's webhook URL in order to start
-a build with the new code.
-
-Your GitHub account has the capability to configure a webhook to request
-whenever a commit is pushed to a specific branch; however, it would only
-be able to make a request against your OpenShift master if that master
-is exposed on the Internet, so you will probably need to simulate the
-request manually for now.
-
-To find the webhook URL, you can visit the web console, click into the
-project, click on *Browse* and then on *Builds*. You'll see two webhook
-URLs. Copy the *Generic* one. It should look like:
-
-    https://ose-master.paas.it:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
-
-**Note**: As of the cut of beta 4, the generic webhook URL was incorrect in the
-webUI. Note the correct syntax above. This is fixed already, but did not make it
-in:
-
-    https://github.com/openshift/origin/issues/2981
-
-If you look at the `frontend-config.json` file that you created earlier,
-you'll notice the same "secret101" entries in triggers. These are
-basically passwords so that just anyone on the web can't trigger the
-build with knowledge of the name only. You could of course have adjusted
-the passwords or had the template generate randomized ones.
-
-This time, in order to run a build for the frontend, we'll use `curl` to hit our
-webhook URL.
-
-First, look at the list of builds:
-
-    osc get build
-
-You should see that the first build had completed. Then, `curl`:
-
-    curl -i -H "Accept: application/json" \
-    -H "X-HTTP-Method-Override: PUT" -X POST -k \
-    https://ose-master.paas.it:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
-
-And now `get build` again:
-
-    osc get build
-    NAME                  TYPE      STATUS     POD
-    ruby-example-1   Source    Complete   ruby-example-1
-    ruby-example-2   Source    Pending    ruby-example-2
-
-You can see that this could have been part of some CI/CD workflow that
-automatically called our webhook once the code was tested.
-
-You can also check the web interface (logged in as `alice`) and see
-that the build is running. Once it is complete, point your web browser
-at the application:
-
-    http://ruby-hello-world.wiring.cloudapps.paas.it/
-
-You should see your big fat typo.
-
-**Note: Remember that it can take a minute for your service endpoint to get
-updated. You might get a `503` error if you try to access the application before
-this happens.**
-
-Since we failed to properly test our application, and our ugly typo has made it
-into production, a nastygram from corporate marketing has told us that we need
-to revert to the previous version, ASAP.
-
-If you log into the web console as `alice` and find the `Deployments` section of
-the `Browse` menu, you'll see that there are two deployments of our frontend: 1
-and 2.
-
-You can also see this information from the cli by doing:
-
-    osc get replicationcontroller
-
-The semantics of this are that a `DeploymentConfig` ensures a
-`ReplicationController` is created to manage the deployment of the built `Image`
-from the `ImageStream`.
-
-Simple, right?
-
-### Rollback
-You can rollback a deployment using the CLI. Let's go and checkout what a rollback to
-`frontend-1` would look like:
-
-    osc rollback frontend-1 --dry-run
-
-Since it looks OK, let's go ahead and do it:
-
-    osc rollback frontend-1
-
-If you look at the `Browse` tab of your project, you'll see that in the `Pods`
-section there is a `frontend-3...` pod now. After a few moments, revisit the
-application in your web browser, and you should see the old "Welcome..." text.
-
-### Activate
-Corporate marketing called again. They think the typo makes us look hip and
-cool. Let's now roll forward (activate) the typo-enabled application:
-
-    osc rollback frontend-2
-
-## A Simple PHP Example
-Let's take some time to build a simple PHP example. Using PHP will make it easy
-for us to demonstrate persistent storage.
-
-### Create a PHP Project
-As `alice`, create a project called `php-upload`.
-
-### Build the App
-The source code for the application is here:
-
-    https://github.com/rjleaf/openshift-php-upload-demo
-
-Using the skills you've learned so far, get this code running in your new
-project. Remember that you'll have to select the PHP builder and that you will
-need to remember to start your build.
-
-### Create a Route
-Using the skills you've learned so far, use the `expose` subcommand to create a
-route for your app.
-
-### Test Your App
-Once the app is built and the route is created, you should be able to access
-your application. If your route was `upload.cloudapps.paas.it` and you went
-to it, you'll notice that you just get the Apache "Welcome" page. That's because
-our app doesn't have an `index.html`. You'll need to go to:
-
-    upload.cloudapps.paas.it/form.html
-
-You'll see that this is a simple file uploader app. Files go into a folder
-`/uploaded` and that folder's index can be viewed.
-
-Go ahead and upload an image file, and then see if you can view it.
-
-### Kill Your Pod
-Use the `osc delete` command to kill the deployed instance of your application.
-Then try to view the file you just uploaded. Notice a problem? We had no
-persistent storage attached to the application. When the pod was killed, the
-temporary changes to the local filesystem were lost.
-
-Fortunately, OpenShift 3 provides a mechanism to attach persistent (external)
-storage to applications. This mechanism could apply to anything, not just simple
-uploaded files. Think databases and other services.
+    https://github.com/openshift/origin/issues/2947
 
 ## Using Persistent Storage (Optional)
-Pods are ephemeral, and so is their storage by default. For shared or persistent
+Having a database for development is nice, but what if you actually want the
+data you store to stick around after the DB pod is redeployed? Pods are
+ephemeral, and so is their storage by default. For shared or persistent
 storage, we need a way to specify that pods should use external volumes.
 
 We can do this a number of ways. [Kubernetes provides methods for directly
@@ -2667,29 +2325,28 @@ For the purposes of this training, we will just demonstrate the master
 exporting an NFS volume for use as storage by the database. **You would
 almost certainly not want to do this in production.** If you happen
 to have another host with an NFS export handy, feel free to substitute
-that instead of setting the following up on the master.
+that instead of the master.
 
-Ensure that nfs-utils is installed (**on all systems**):
+As `root` on the master:
+
+1. Ensure that nfs-utils is installed (**on all systems**):
 
         yum install nfs-utils
 
-Then, as `root` on the master:
-
-1. Create the directory we will export:
+2. Create the directory we will export:
 
         mkdir -p /var/export/vol1
         chown nfsnobody:nfsnobody /var/export/vol1
         chmod 700 /var/export/vol1
 
-1. Edit `/etc/exports` and add the following line:
+3. Edit `/etc/exports` and add the following line:
 
         /var/export/vol1 *(rw,sync,all_squash)
 
-1. Enable and start NFS services:
+4. Enable and start NFS services:
 
         systemctl enable rpcbind nfs-server
-        systemctl start rpcbind nfs-server nfs-lock 
-        systemctl start nfs-idmap
+        systemctl start rpcbind nfs-server nfs-lock nfs-idmap
 
 Note that the volume is owned by `nfsnobody` and access by all remote users
 is "squashed" to be access by this user. This essentially disables user
@@ -2702,9 +2359,9 @@ Arguably, the container should operate differently. In the long run, we
 probably need to come up with best practices for use of NFS from containers.
 
 ### NFS Firewall
-We will need to open ports on the firewall on the master to enable the nodes to
-communicate with us over NFS. First, let's add rules for NFS to the running
-state of the firewall on the master as `root`:
+We will need to open ports on the firewall on the master to enable NFS to
+communicate from the nodes. First, let's add rules for NFS to the running state
+of the firewall:
 
     iptables -I OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 111 -j ACCEPT
     iptables -I OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2049 -j ACCEPT
@@ -2769,7 +2426,7 @@ NFS mount:
       "apiVersion": "v1",
       "kind": "PersistentVolume",
       "metadata": {
-        "name": "phpvolume"
+        "name": "pv0001"
       },
       "spec": {
         "capacity": {
@@ -2786,15 +2443,15 @@ NFS mount:
 Create this object as the `root` (administrative) user:
 
     # osc create -f persistent-volume.json
-    persistentvolumes/phpvolume
+    persistentvolumes/pv0001
 
 This defines a volume for OpenShift projects to use in deployments. The
 storage should correspond to how much is actually available (make each
 volume a separate filesystem if you want to enforce this limit). Take a
 look at it now:
 
-    # osc describe persistentvolumes/phpvolume
-    Name:   phpvolume
+    # osc describe persistentvolumes/pv0001
+    Name:   pv0001
     Labels: <none>
     Status: Available
     Claim:
@@ -2808,7 +2465,7 @@ that specifies what kind and how much storage is desired:
       "apiVersion": "v1",
       "kind": "PersistentVolumeClaim",
       "metadata": {
-        "name": "phpclaim"
+        "name": "claim1"
       },
       "spec": {
         "accessModes": [ "ReadWriteMany" ],
@@ -2820,7 +2477,7 @@ that specifies what kind and how much storage is desired:
       }
     }
 
-We can have `alice` do this in the project you created:
+We can have `alice` do this in the `wiring` project:
 
     $ osc create -f persistent-volume-claim.json
     persistentVolumeClaim/claim1
@@ -2833,16 +2490,16 @@ been filled ("bound" to a PersistentVolume).
 
     $ osc get pvc
     NAME      LABELS    STATUS    VOLUME
-    phpclaim  map[]     Bound     phpvolume
+    claim1    map[]     Bound     pv0001
 
 If as `root` we now go back and look at our PV, we will also see that it has
 been claimed:
 
-    # osc describe pv/phpvolume
-    Name:   phpvolume
+    # osc describe pv/pv0001
+    Name:   pv0001
     Labels: <none>
     Status: Bound
-    Claim:  upload/phpclaim
+    Claim:  wiring/claim1
 
 The PersistentVolume is now claimed and can't be claimed by any other project.
 
@@ -2853,16 +2510,13 @@ dynamically provisions a corresponding volume, and creates the API object
 to fulfill the claim.
 
 ### Use the Claimed Volume
-Finally, we need to modify the `DeploymentConfig` to specify that this volume
-should be mounted where the database will use it. As `alice`:
+Finally, we need to modify our `database` DeploymentConfig to specify that
+this volume should be mounted where the database will use it. As `alice`:
 
-    $ osc edit dc/upload
-
-**Note:** This assumes you named your app `upload` when you created it. You may
-need to figure out what the name of your `DeploymentConfig` is.
+    $ osc edit dc/database
 
 The part we will need to edit is the pod template. We will need to add two
-parts: 
+parts:
 
 * a definition of the volume
 * where to mount it inside the container
@@ -2870,16 +2524,16 @@ parts:
 First, directly under the `template` `spec:` line, add this YAML (indented from the `spec:` line):
 
           volumes:
-          - name: php-upload-volume
+          - name: pvol
             persistentVolumeClaim:
-              claimName: phpclaim
+              claimName: claim1
 
 Then to have the container mount this, add this YAML after the
 `terminationMessagePath:` line:
 
             volumeMounts:
-            - mountPath: /opt/openshift/src/uploaded
-              name: php-upload-volume
+            - mountPath: /var/lib/mysql/data
+              name: pvol
 
 Remember that YAML is sensitive to indentation. The final template should
 look like this:
@@ -2891,16 +2545,16 @@ look like this:
           deploymentconfig: database
       spec:
         volumes:
-        - name: php-upload-volume
+        - name: pvol
           persistentVolumeClaim:
-            claimName: phpclaim
+            claimName: claim1
         containers:
         - capabilities: {}
     [...]
           terminationMessagePath: /dev/termination-log
           volumeMounts:
-          - mountPath: /opt/openshift/src/uploaded
-            name: php-upload-volume
+          - mountPath: /var/lib/mysql/data
+            name: pvol
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         serviceAccount: ""
@@ -2909,77 +2563,250 @@ Save and exit. This change to configuration will trigger a new deployment
 of the database, and this time, it will be using the NFS volume we exported
 from master.
 
-### Revisit and Reupload
-Go back to your application and upload a file. Did it work?
+### Restart the Frontend
+Any values or data we had inserted previously just got blown away. The
+`deploymentConfig` update caused a new MySQL pod to be launched. Since this is
+the first time the pod was launched with persistent data, any previous data was
+lost.
 
-On your master as `root`, check out the contents of `/var/export/vol1`. Do you
-see your file?
+Additionally, the Frontend pod will perform a database initialization when it
+starts up. Since we haven't restarted the frontend, our database is actually
+bare. If you try to use the app now, you'll get "Internal Server Error".
 
-### Kill the Pod
-Go ahead and kill the pod again, and wait for it to come back up. Now try to
-view your file again. Did it work? Great!
+Go ahead and kill the Frontend pod like we did previously to cause it to
+restart:
+
+     osc delete pod `osc get pod | grep front | awk {'print $1'}`
+
+Once the new pod has started, go ahead and visit the web page. Add a few values
+via the application. Then delete the database pod and wait for it to come back.
+You should be able to retrieve the same values you entered.
+
+Remember, to quickly delete the Database pod you can do the following:
+
+    osc delete pod/`osc get pod | grep -e "database-[0-9]" | awk {'print $1'}`
+
+**Note:** This doesn't seem to work right now, but we're not sure why. I think
+it has to do with Ruby's persistent connection to the MySQL service not going
+away gracefully, or something. Killing the frontend again will definitely work.
+
+For further confirmation that your database pod is in fact using the NFS
+volume, simply check what is stored there on `master`:
+
+    # ls /var/export/vol1
+    database-3-n1i2t.pid  ibdata1  ib_logfile0  ib_logfile1  mysql  performance_schema  root
 
 Further information on use of PersistentVolumes is available in the
 [OpenShift Origin documentation](http://docs.openshift.org/latest/dev_guide/volumes.html).
 This is a very new feature, so it is very manual for now, but look for more tooling
 taking advantage of PersistentVolumes to be created in the future.
 
-## More Exec Examples
-The whole time that we have been working with OpenShift 3 so far we have not
-been dealing with SSH and our containers. In fact, the builder images provided
-by Red Hat do not have an SSH daemon installed and port 22 is never exposed by
-any services.
+## Rollback/Activate and Code Lifecycle
+Not every coder is perfect, and sometimes you want to rollback to a previous
+incarnation of your application. Sometimes you then want to go forward to a
+newer version, too.
 
-That does not mean, though, that you cannot access the inside of your
-application containers. There is an `exec` subcommand that lets you execute
-arbitrary commands inside of your containers. We've previously used `osc exec`
-to get a session inside our router, but that was as the cluster administrator.
-Regular users can `exec`, too!
+The next few labs require that you have a Github account. We will take Alice's
+"wiring" application and modify its front-end and then rebuild. We'll roll-back
+to the original version, and then go forward to our re-built version.
 
-### Introduction to exec
-Still in your PHP project, take a look at the help for `exec`:
+### Fork the Repository
+Our wiring example's frontend service uses the following Github repository:
 
-    osc exec -h
-    Execute a command in a container.
-    
-    Usage: 
-      osc exec -p POD -c CONTAINER -- COMMAND [args...] [options]
-    
-    Examples:
-      // Get output from running 'date' in ruby-container from pod 123456-7890
-      $ osc exec -p 123456-7890 -c ruby-container date
-    
-      // Switch to raw terminal mode, sends stdin to 'bash' in ruby-container from pod 123456-780 and sends stdout/stderr from 'bash' back to the client
-      $ osc exec -p 123456-7890 -c ruby-container -i -t -- bash -il
-    
-    Options:
-      -c, --container='': Container name
-      -p, --pod='': Pod name
-      -i, --stdin=false: Pass stdin to the container
-      -t, --tty=false: Stdin is a TTY
-    
-    Use "osc --help" for a list of all commands available in osc.
-    Use "osc options" for a list of global command-line options (applies to all commands).
+    https://github.com/openshift/ruby-hello-world
 
-To start, let's try to look at the filesystem of our PHP application. Find the
-ID if your pod and then try something like the following:
+Go ahead and fork this into your own account by clicking the *Fork* Button at
+the upper right.
 
-    osc exec -p upload-2-8no16 -- ls -l /opt/openshift/src
-    total 8
-    -rw-r--r--. 1 default default 365 Jun 15 09:18 form.html
-    -rw-r--r--. 1 default default 700 Jun 15 09:18 upload.php
-    drwx------. 2   65534   65534  33 Jun 15 09:55 uploaded
+### Update the BuildConfig
+Remember that a `BuildConfig`(uration) tells OpenShift how to do a build.
+Still as the `alice` user, take a look at the current `BuildConfig` for our
+frontend:
 
-We can create a file and put some content in it, too:
+    osc get buildconfig ruby-sample-build -o yaml
+    apiVersion: v1beta1
+    kind: BuildConfig
+    metadata:
+      creationTimestamp: 2015-03-10T15:40:26-04:00
+      labels:
+        template: application-template-stibuild
+      name: ruby-sample-build
+      namespace: wiring
+      resourceVersion: "831"
+      selfLink: /osapi/v1beta1/buildConfigs/ruby-sample-build?namespace=wiring
+      uid: 4cff2e5e-c75d-11e4-806e-525400b33d1d
+    parameters:
+      output:
+        to:
+          kind: ImageStream
+          name: origin-ruby-sample
+      source:
+        git:
+          uri: git://github.com/openshift/ruby-hello-world.git
+          ref: beta4
+        type: Git
+      strategy:
+        stiStrategy:
+          builderImage: openshift/ruby-20-rhel7
+          image: openshift/ruby-20-rhel7
+        type: STI
+    triggers:
+    - github:
+        secret: secret101
+      type: github
+    - generic:
+        secret: secret101
+      type: generic
+    - imageChange:
+        from:
+          name: ruby-20-rhel7
+        image: openshift/ruby-20-rhel7
+        imageRepositoryRef:
+          name: ruby-20-rhel7
+        tag: latest
+      type: imageChange
 
-    osc exec -p upload-2-8no16 -- /bin/bash -c 'echo "foo" > /opt/openshift/src/bar'
+As you can see, the current configuration points at the
+`openshift/ruby-hello-world` repository. Since you've forked this repo, let's go
+ahead and re-point our configuration. Our friend `osc edit` comes to the rescue
+again:
 
-You should be able to visit your PHP application and see the content of the file
-"bar".
+    osc edit bc ruby-sample-build
 
-Lastly, you can execute an interactive bash session inside the container, too.
+Change the "uri" reference to match the name of your Github
+repository. Assuming your github user is `alice`, you would point it
+to `git://github.com/alice/ruby-hello-world.git`. Save and exit
+the editor.
 
-    osc exec -it -p upload-2-8no16 -- /bin/bash -il
+If you again run `osc get buildconfig ruby-sample-build -o yaml` you should see
+that the `uri` has been updated.
+
+### Change the Code
+Github's web interface will let you make edits to files. Go to your forked
+repository (eg: https://github.com/alice/ruby-hello-world), select the `beta3`
+branch, and find the file `main.erb` in the `views` folder.
+
+Change the following HTML:
+
+    <div class="page-header" align=center>
+      <h1> Welcome to an OpenShift v3 Demo App! </h1>
+    </div>
+
+To read (with the typo):
+
+    <div class="page-header" align=center>
+      <h1> This is my crustom demo! </h1>
+    </div>
+
+You can edit code on Github by clicking the pencil icon which is next to the
+"History" button. Provide some nifty commit message like "Personalizing the
+application."
+
+If you know how to use Git/Github, you can just do this "normally".
+
+### Start a Build with a Webhook
+Webhooks are a way to integrate external systems into your OpenShift
+environment so that they can fire off OpenShift builds. Generally
+speaking, one would make code changes, update the code repository, and
+then some process would hit OpenShift's webhook URL in order to start
+a build with the new code.
+
+Your GitHub account has the capability to configure a webhook to request
+whenever a commit is pushed to a specific branch; however, it would only
+be able to make a request against your OpenShift master if that master
+is exposed on the Internet, so you will probably need to simulate the
+request manually for now.
+
+To find the webhook URL, you can visit the web console, click into the
+project, click on *Browse* and then on *Builds*. You'll see two webhook
+URLs. Copy the *Generic* one. It should look like:
+
+    https://ose-master.paas.it:8443/osapi/v1beta1/buildConfigHooks/ruby-sample-build//github?namespace=wiring
+
+**Note**: As of the cut of beta 4, the generic webhook URL was incorrect in the
+webUI. Note the correct syntax above. This is fixed already, but did not make it
+in:
+
+    https://github.com/openshift/origin/issues/2981
+
+If you look at the `frontend-config.json` file that you created earlier,
+you'll notice the same "secret101" entries in triggers. These are
+basically passwords so that just anyone on the web can't trigger the
+build with knowledge of the name only. You could of course have adjusted
+the passwords or had the template generate randomized ones.
+
+This time, in order to run a build for the frontend, we'll use `curl` to hit our
+webhook URL.
+
+First, look at the list of builds:
+
+    osc get build
+
+You should see that the first build had completed. Then, `curl`:
+
+    curl -i -H "Accept: application/json" \
+    -H "X-HTTP-Method-Override: PUT" -X POST -k \
+    https://ose-master.paas.it:8443/osapi/v1beta1/buildConfigHooks/ruby-sample-build//github?namespace=wiring
+
+And now `get build` again:
+
+    osc get build
+    NAME                  TYPE      STATUS     POD
+    ruby-sample-build-1   Source    Complete   ruby-sample-build-1
+    ruby-sample-build-2   Source    Pending    ruby-sample-build-2
+
+You can see that this could have been part of some CI/CD workflow that
+automatically called our webhook once the code was tested.
+
+You can also check the web interface (logged in as `alice`) and see
+that the build is running. Once it is complete, point your web browser
+at the application:
+
+    http://wiring.cloudapps.paas.it/
+
+You should see your big fat typo.
+
+**Note: Remember that it can take a minute for your service endpoint to get
+updated. You might get a `503` error if you try to access the application before
+this happens.**
+
+Since we failed to properly test our application, and our ugly typo has made it
+into production, a nastygram from corporate marketing has told us that we need
+to revert to the previous version, ASAP.
+
+If you log into the web console as `alice` and find the `Deployments` section of
+the `Browse` menu, you'll see that there are two deployments of our frontend: 1
+and 2.
+
+You can also see this information from the cli by doing:
+
+    osc get replicationcontroller
+
+The semantics of this are that a `DeploymentConfig` ensures a
+`ReplicationController` is created to manage the deployment of the built `Image`
+from the `ImageStream`.
+
+Simple, right?
+
+### Rollback
+You can rollback a deployment using the CLI. Let's go and checkout what a rollback to
+`frontend-1` would look like:
+
+    osc rollback frontend-1 --dry-run
+
+Since it looks OK, let's go ahead and do it:
+
+    osc rollback frontend-1
+
+If you look at the `Browse` tab of your project, you'll see that in the `Pods`
+section there is a `frontend-3...` pod now. After a few moments, revisit the
+application in your web browser, and you should see the old "Welcome..." text.
+
+### Activate
+Corporate marketing called again. They think the typo makes us look hip and
+cool. Let's now roll forward (activate) the typo-enabled application:
+
+    osc rollback frontend-2
 
 ## Customized Build and Run Processes
 OpenShift v3 supports customization of both the build and run processes.
@@ -3015,7 +2842,7 @@ Our old friend `curl` is back:
 
     curl -i -H "Accept: application/json" \
     -H "X-HTTP-Method-Override: PUT" -X POST -k \
-    https://ose-master.paas.it:8443/osapi/v1beta3/namespaces/wiring/buildconfigs/ruby-example/webhooks/secret101/generic
+    https://ose-master.paas.it:8443/osapi/v1beta1/buildConfigHooks/ruby-sample-build//github?namespace=wiring
 
 ### Watch the Build Logs
 Using the skills you have learned, watch the build logs for this build. If you
@@ -3032,7 +2859,7 @@ run inside of your builder pod. That's what you see by using `build-logs` - the
 output of the assemble script. The
 `run` script actually is what is executed to "start" your application's pod. In
 other words, the `run` script is what starts the Ruby process for an image that
-was built based on the `ruby-20-rhel7` S2I builder. 
+was built based on the `ruby-20-rhel7` S2I builder.
 
 To look inside the builder pod, as `alice`:
 
@@ -3249,7 +3076,7 @@ deployment happens.
 
 As `alice`:
 
-    osc start-build ruby-example
+    osc start-build ruby-sample-build
 
 Or go into the web console and click the "Start Build" button in the Builds
 area.
@@ -3259,13 +3086,13 @@ About a minute after the build completes, you should see something like the foll
 of `osc get pod` as `alice`:
 
     POD                                IP          CONTAINER(S)               IMAGE(S)                                                                                                                HOST                                    LABELS                                                                                                                  STATUS       CREATED         MESSAGE
-    database-2-rj72q                   10.1.0.15                                                                                                                                                      ose-master.paas.it/192.168.100.2   deployment=database-2,deploymentconfig=database,name=database                                                           Running      About an hour   
-                                                   ruby-helloworld-database   registry.access.redhat.com/openshift3_beta/mysql-55-rhel7                                                                                                                                                                                                                               Running      About an hour   
-    deployment-frontend-7-hook-4i8ch                                                                                                                                                                  ose-node1.paas.it/192.168.100.3    <none>                                                                                                                  Succeeded    41 seconds      
+    database-2-rj72q                   10.1.0.15                                                                                                                                                      ose-master.paas.it/192.168.100.2   deployment=database-2,deploymentconfig=database,name=database                                                           Running      About an hour
+                                                   ruby-helloworld-database   registry.access.redhat.com/openshift3_beta/mysql-55-rhel7                                                                                                                                                                                                                               Running      About an hour
+    deployment-frontend-7-hook-4i8ch                                                                                                                                                                  ose-node1.paas.it/192.168.100.3    <none>                                                                                                                  Succeeded    41 seconds
                                                    lifecycle                  172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Terminated   36 seconds      exit code 0
-    frontend-7-nnnxz                   10.1.1.24                                                                                                                                                      ose-node1.paas.it/192.168.100.3    deployment=frontend-7,deploymentconfig=frontend,name=frontend                                                           Running      29 seconds      
-                                                   ruby-helloworld            172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Running      26 seconds      
-    ruby-example-7-build                                                                                                                                                                         ose-master.paas.it/192.168.100.2   build=ruby-example-7,buildconfig=ruby-example,name=ruby-example,template=application-template-stibuild   Succeeded    2 minutes       
+    frontend-7-nnnxz                   10.1.1.24                                                                                                                                                      ose-node1.paas.it/192.168.100.3    deployment=frontend-7,deploymentconfig=frontend,name=frontend                                                           Running      29 seconds
+                                                   ruby-helloworld            172.30.118.110:5000/wiring/origin-ruby-sample@sha256:2984cfcae1dd42c257bd2f79284293df8992726ae24b43470e6ffd08affc3dfd                                                                                                                                                                   Running      26 seconds
+    ruby-sample-build-7-build                                                                                                                                                                         ose-master.paas.it/192.168.100.2   build=ruby-sample-build-7,buildconfig=ruby-sample-build,name=ruby-sample-build,template=application-template-stibuild   Succeeded    2 minutes
                                                    sti-build                  openshift3_beta/ose-sti-builder:v0.5.2.2                                                                                                                                                                                                                                                Terminated   2 minutes       exit code 0
 
 Yes, it's ugly, thanks for reminding us.
