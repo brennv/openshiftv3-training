@@ -568,7 +568,7 @@ project.
 
 After verifying your demo project is Active, run the following on ose-workstation to verify your work:
 ```
-[root@ose-workstation ~]# kc-osev3.bash grade1
+[root@ose-workstation ~]# kc-osev3 grade1
 ```
 
 ## Your First Application
@@ -689,7 +689,7 @@ Review your limit ranges
 
 After reviewing your limit ranges, run the following on ose-workstation to verify your work:
 ```
-[root@ose-workstation ~]# kc-osev3.bash grade2
+[root@ose-workstation ~]# kc-osev3 grade2
 ```
 
 
@@ -851,7 +851,7 @@ Hooray!
 
 After testing with curl, run the following on ose-workstation to verify your work:
 ```
-[root@ose-workstation ~]# kc-osev3.bash grade3
+[root@ose-workstation ~]# kc-osev3 grade3
 ```
 
 ### Looking at the Pod in the Web Console
@@ -1111,7 +1111,7 @@ called "infra". This `--selector` argument asks OpenShift:
 
 After checking your router placement and status, run the following on ose-workstation to verify your work:
 ```
-[root@ose-workstation ~]# kc-osev3.bash grade4
+[root@ose-workstation ~]# kc-osev3 grade4
 ```
 
 ### Router Placement By Region
@@ -1432,7 +1432,7 @@ not be necessary to specify the CA everywhere.
 
 Run the following on ose-workstation to verify complete pod-service-route example application is functioning:
 ```
-[root@ose-workstation ~]# kc-osev3.bash grade5
+[root@ose-workstation ~]# kc-osev3 grade5
 ```
 
 ### The Web Console
