@@ -497,6 +497,8 @@ To start, we will need the `htpasswd` binary, which is made available by install
 
 From there, we can create a password for our users, Joe and Alice:
 
+	useradd joe
+    useradd alice
     touch /etc/openshift/openshift-passwd
     htpasswd -b /etc/openshift/openshift-passwd joe redhat
     htpasswd -b /etc/openshift/openshift-passwd alice redhat
