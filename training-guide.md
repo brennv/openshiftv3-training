@@ -825,24 +825,42 @@ the pod inside of it. The command should display the ID of the pod:
 
 Issue a `get pods` to see the details of how it was defined:
 
-    oc get pods
-    POD               IP         CONTAINER(S)      IMAGE(S)                           HOST                                   LABELS                 STATUS    CREATED      MESSAGE
-    hello-openshift   10.1.1.2                                                        ose-node1.paas.it/192.168.100.3   name=hello-openshift   Running   16 seconds
-                                 hello-openshift   openshift/hello-openshift:v0.4.3                                                                 Running   2 seconds
+```
+[joe@ose-master beta4]$ oc get pods
+NAME              READY     REASON    RESTARTS   AGE
+hello-openshift   1/1       Running   0          16s
+```
+
 
 The output of this command shows all of the Docker containers in a pod, which
 explains some of the spacing.
 
-On the node where the pod is running (`HOST`), look at the list of Docker
-containers with `docker ps` (in a `root` terminal) to see the bound ports.  We
-should see an `openshift3_beta/ose-pod` container bound to 36061 on the host and
-bound to 8080 on the container, along with several other `ose-pod` containers.
+To get additional details about the `hello-openshift` pod run the following:
 
-    CONTAINER ID        IMAGE                              COMMAND              CREATED             STATUS              PORTS                    NAMES
-    ded86f750698        openshift/hello-openshift:v0.4.3   "/hello-openshift"   7 minutes ago       Up 7 minutes                                 k8s_hello-openshift.b69b23ff_hello-openshift_demo_522adf06-0f83-11e5-982b-525400a4dc47_f491f4be
-    405d63115a60        openshift3_beta/ose-pod:v0.5.2.2   "/pod"               7 minutes ago       Up 7 minutes        0.0.0.0:6061->8080/tcp   k8s_POD.ad86e772_hello-openshift_demo_522adf06-0f83-11e5-982b-525400a4dc47_6cc974dc
+```
+[joe@ose-master beta4]$ oc describe pods hello-openshift
+Name:				hello-openshift
+Image(s):			openshift/hello-openshift:v0.4.3
+Host:				ose-node1.paas.it/192.168.100.3
+Labels:				name=hello-openshift
+Status:				Running
+IP:				10.1.0.2
+...SNIP...
+```
 
-The `openshift3_beta/ose-pod` container exists because of the way network
+The pod is running on the Host given above.  Open a shell as the root user on that 
+Host and look at the list of Docker containers with `docker ps`.  This will show us 
+the bound ports.  We should see an `openshift3/ose-pod` container bound to 36061 
+on the host and bound to 8080 on the container, along with several other `ose-pod` containers.
+
+```
+[root@ose-node1 ~]# docker ps
+CONTAINER ID        IMAGE                              COMMAND              CREATED             STATUS              PORTS                     NAMES
+fe59c8e91784        openshift/hello-openshift:v0.4.3   "/hello-openshift"   6 minutes ago       Up 6 minutes                                  k8s_hello-openshift.9bd0da0e_hello-openshift_demo_85eb45ec-1f64-11e5-910d-2cc2601d1db8_735299af   
+453e5f2b5964        openshift3/ose-pod:v3.0.0.0        "/pod"               6 minutes ago       Up 6 minutes        0.0.0.0:36061->8080/tcp   k8s_POD.acd3e571_hello-openshift_demo_85eb45ec-1f64-11e5-910d-2cc2601d1db8_bce4cc72   
+```
+
+The `openshift3/ose-pod` container exists because of the way network
 namespacing works in Kubernetes. For the sake of simplicity, think of the
 container as nothing more than a way for the host OS to get an interface created
 for the corresponding pod to be able to receive traffic. Deeper understanding of
