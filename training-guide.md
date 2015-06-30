@@ -558,7 +558,7 @@ has been completely redesigned for V3.
 ### Web Console
 Open your browser and visit the following URL:
 
-    https://fqdn.of.master:8443
+    https://ose-master.paas.it:8443
 
 Be aware that it may take up to 90 seconds for the web console to be available
 any time you restart the master.  Remember to see [Using your Browser in the Learning Environment](#using-your-browser-in-the-learning-environment) to use your workstation's browser with the ravello-based learning environment.
