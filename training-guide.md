@@ -161,7 +161,9 @@
 ### Launching the Environment
 This training will use a ravello-based cloud environment.  To manage this environment you will use a CLI called `ravshello`.  See [this Red Hat internal link](https://mojo.redhat.com/docs/DOC-987131) for more information about `ravshello`.
 
-Create a new application from the blueprint **Openshift-v3-Training**
+Create a new application based on the module you are taking:
+* Module 1: Installation should use blueprint **Openshift-v3-Training-Installation**
+* Module 2: Basic Usage should use blueprint **Openshift-v3-Training-Basic-Usage**
 
 ### Virtual Machines
 This environment will provide the following virtual machines for your use:
@@ -715,28 +717,31 @@ Then, execute:
 OpenShift, by default, is using a self-signed SSL certificate, so we must point
 our tool at the CA file.
 
-The `login` process created a file called named `~/.config/openshift/config`
+The `login` process created a file called named `~/.kube/config`
 folder. Take a look at it, and you'll see something like the following:
 
-    apiVersion: v1
-    clusters:
-    - cluster:
-        certificate-authority: ../../../../etc/openshift/master/ca.crt
-        server: https://ose-master.paas.it:8443
-      name: ose-master-paas.it:8443
-    contexts:
-    - context:
-        cluster: ose-master-paas.it:8443
-        namespace: demo
-        user: joe/ose-master-paas.it:8443
-      name: demo/ose-master-paas.it:8443/joe
-    current-context: demo/ose-master-paas.it:8443/joe
-    kind: Config
-    preferences: {}
-    users:
-    - name: joe/ose-master-paas.it:8443
-      user:
-        token: _ebJfOdcHy8TW4XIDxJjOQEC_yJp08zW0xPI-JWWU3c
+```
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: ../../../etc/openshift/master/ca.crt
+    server: https://ose-master.paas.it:8443
+  name: ose-master-paas-it:8443
+contexts:
+- context:
+    cluster: ose-master-paas-it:8443
+    namespace: demo
+    user: joe/ose-master-paas-it:8443
+  name: demo/ose-master-paas-it:8443/joe
+current-context: demo/ose-master-paas-it:8443/joe
+kind: Config
+preferences: {}
+users:
+- name: joe/ose-master-paas-it:8443
+  user:
+    token: NdETXgzk-lzYg8Dx95XDb35aMulbR7HisyyKZohuUDg
+```
+
 
 This configuration file has an authorization token, some information about where
 our server lives, our project, etc.
