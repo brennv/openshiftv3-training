@@ -717,8 +717,7 @@ Then, execute:
 OpenShift, by default, is using a self-signed SSL certificate, so we must point
 our tool at the CA file.
 
-The `login` process created a file called named `~/.kube/config`
-folder. Take a look at it, and you'll see something like the following:
+The `login` process created a file called named `~/.kube/config`. Take a look at it, and you'll see something like the following:
 
 ```
 apiVersion: v1
@@ -751,11 +750,10 @@ details on how to fetch a new token once this one expires.  The installer sets
 the default token lifetime to 4 hours.
 
 ### Grab the Training Repo Again
-Since Joe and Alice can't access the training folder in root's home directory,
-go ahead and grab it inside Joe's home folder:
+As the user `joe` make sure you have access to the latest from this git repo:
 
-    cd
-    git clone https://github.com/openshift/training.git
+    cd ~/training
+    git pull
     cd ~/training/beta4
 
 ### The Hello World Definition JSON
