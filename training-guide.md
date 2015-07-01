@@ -749,7 +749,7 @@ our server lives, our project, etc.
 details on how to fetch a new token once this one expires.  The installer sets
 the default token lifetime to 4 hours.
 
-### Grab the Training Repo Again
+### Make sure the training repo is updated
 As the user `joe` make sure you have access to the latest from this git repo:
 
     cd ~/training
@@ -1077,6 +1077,22 @@ interface, unlike most containers that listen only on private IPs. The router
 proxies external requests for route names to the IPs of actual pods identified
 by the service associated with the route.
 
+Before we do, modify the scheduling policy for `ose-master.paas.it` by running as root on ose-master:
+
+```
+[root@ose-master ~]# oadm manage-node ose-master.paas.it --schedulable=true
+```
+
+Now, when we view the status of our nodes, we find they are all in the `Ready` status:
+
+```
+[root@ose-master ~]# oc get nodes
+NAME                 LABELS                                                                STATUS
+ose-master.paas.it   kubernetes.io/hostname=ose-master.paas.it,region=infra,zone=default   Ready
+ose-node1.paas.it    kubernetes.io/hostname=ose-node1.paas.it,region=primary,zone=east     Ready
+ose-node2.paas.it    kubernetes.io/hostname=ose-node2.paas.it,region=primary,zone=west     Ready
+```
+
 OpenShift's admin command set enables you to deploy router pods automatically.
 Let's try to create one:
 
@@ -1094,13 +1110,14 @@ router image, since the tooling defaults to upstream/origin:
 
 Adding that would be enough to allow the command to proceed, but if we want
 this router to work for our environment, we also need to specify the beta
-router image (the tooling defaults to upstream/origin otherwise) and we need
-to supply the wildcard cert/key that we created for the cloud domain.
+router image preloaded in the learning environment (the tooling defaults to 
+upstream/origin otherwise) and we need to supply the wildcard cert/key that 
+we created for the cloud domain.
 
     oadm router --default-cert=cloudapps.router.pem \
     --credentials=/etc/openshift/master/openshift-router.kubeconfig \
     --selector='region=infra' \
-    --images='registry.access.redhat.com/openshift3_beta/ose-${component}:${version}'
+    --images='registry.access.redhat.com/openshift3/ose-${component}:${version}'
 
 If this works, you'll see some output:
 
