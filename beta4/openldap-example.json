@@ -1,6 +1,6 @@
 {
   "apiVersion": "v1beta1",
-  "kind": "Config",
+  "kind": "List",
   "items": [
     {
         "kind": "Service",
