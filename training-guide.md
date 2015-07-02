@@ -1129,19 +1129,26 @@ did not run this command in the folder where you created it.
 
 Let's check the pods:
 
-    oc get pods
+```
+[root@ose-master beta4]# oc get pods
+NAME             READY     REASON    RESTARTS   AGE
+router-1-378d9   1/1       Running   0          59s
+```
 
 In the output, you should see the router pod status change to "running" after a
 few moments (it may take up to a few minutes):
 
-    POD              IP         CONTAINER(S)   IMAGE(S)                                                                 HOST                                    LABELS                                                      STATUS    CREATED      MESSAGE
-    router-1-cutck   10.1.0.4                                                                                           ose-master.paas.it/192.168.100.2   deployment=router-1,deploymentconfig=router,router=router   Running   18 minutes
-                                router         registry.access.redhat.com/openshift3_beta/ose-haproxy-router:v0.5.2.2                                                                                                       Running   18 minutes
+```
+[root@ose-master beta4]# oc describe pods router-1-378d9
+Name:				router-1-378d9
+Image(s):			registry.access.redhat.com/openshift3/ose-haproxy-router:v3.0.0.0
+Host:				ose-master.paas.it/192.168.100.2
+Labels:				deployment=router-1,deploymentconfig=router,router=router
+Status:				Running
+IP:				10.1.2.3
+Replication Controllers:	router-1 (1/1 replicas created)
+```
 
-Note: This output is huge, wide, and ugly. We're working on making it nicer. You
-can chime in here:
-
-    https://github.com/GoogleCloudPlatform/kubernetes/issues/7843
 
 In the above router creation command (`oadm router...`) we also specified
 `--selector`. This flag causes a `nodeSelector` to be placed on all of the pods
