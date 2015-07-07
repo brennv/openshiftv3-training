@@ -31,7 +31,7 @@
         "name": "hello-openshift-route"
       },
       "spec": {
-        "host": "hello-openshift.cloudapps.example.com",
+        "host": "hello-openshift.cloudapps.paas.it",
         "to": {
           "name": "hello-openshift-service"
         },
