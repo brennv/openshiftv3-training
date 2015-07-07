@@ -1112,7 +1112,7 @@ router image, since the tooling defaults to upstream/origin:
     --credentials=/etc/openshift/master/openshift-router.kubeconfig
 
 Adding that would be enough to allow the command to proceed, but if we want
-this router to work for our environment, we also need to specify the beta
+this router to work for our environment, we also need to specify the
 router image preloaded in the learning environment (the tooling defaults to 
 upstream/origin otherwise) and we need to supply the wildcard cert/key that 
 we created for the cloud domain.
@@ -1133,13 +1133,19 @@ did not run this command in the folder where you created it.
 Let's check the pods:
 
 ```
+[root@ose-master ~]# oc get pods
+NAME              READY     REASON    RESTARTS   AGE
+router-1-2ngvw    0/1       Pending   0          12s
+router-1-deploy   1/1       Running   0          45s
+```
+Then after some time (maybe up to a few minutes) you'll see:
+```
 [root@ose-master beta4]# oc get pods
 NAME             READY     REASON    RESTARTS   AGE
 router-1-378d9   1/1       Running   0          59s
 ```
 
-In the output, you should see the router pod status change to "running" after a
-few moments (it may take up to a few minutes):
+If we inspect the running router pod further we find:
 
 ```
 [root@ose-master beta4]# oc describe pods router-1-378d9
