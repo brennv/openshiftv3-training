@@ -923,11 +923,13 @@ fourth, because the quota on this project limits us to three total pods.
 
 As `joe`, go ahead and use `oc create` and you will see the following:
 
-    oc create -f hello-quota.json
-    pods/hello-openshift-1
-    pods/hello-openshift-2
-    pods/hello-openshift-3
-    Error from server: Pod "hello-openshift-4" is forbidden: Limited to 3 pods
+```
+[joe@ose-master beta4]$ oc create -f hello-quota.json
+pods/hello-openshift-1
+pods/hello-openshift-2
+Error from server: Pod "hello-openshift-3" is forbidden: Limited to 3 pods
+Error from server: Pod "hello-openshift-4" is forbidden: Limited to 3 pods
+```
 
 Let's delete these pods quickly. As `joe` again:
 
