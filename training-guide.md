@@ -537,10 +537,11 @@ We also need to understand a little bit about users and administration. The
 default configuration for CLI operations currently is to be the `master-admin`
 user, which is allowed to create projects. We can use the "admin"
 OpenShift command to create a project, and assign an administrative user to it:
+```
+[root@ose-master ~]# oc new-project demo --display-name="OpenShift 3 Demo" --description="This is the first demo project with OpenShift v3"
+[root@ose-master ~]# oc policy add-role-to-user admin joe -n demo
+```
 
-    oc new-project demo --display-name="OpenShift 3 Demo" \
-    --description="This is the first demo project with OpenShift v3" \
-    --admin=joe
 
 This command creates a project:
 * with the id `demo`
