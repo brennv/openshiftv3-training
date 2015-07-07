@@ -1223,114 +1223,123 @@ Don't forget -- the materials are in `~/training/beta4`.
 The following is a complete definition for a pod with a corresponding service
 and a corresponding route. It also includes a deployment configuration.
 
+```
+{
+  "kind": "List",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "hello-service-complete-example"
+  },
+  "items": [
     {
-      "kind": "Config",
-      "apiVersion": "v1beta3",
+      "kind": "Service",
+      "apiVersion": "v1",
       "metadata": {
-        "name": "hello-service-complete-example"
+        "name": "hello-openshift-service"
       },
-      "items": [
-        {
-          "kind": "Service",
-          "apiVersion": "v1beta3",
-          "metadata": {
-            "name": "hello-openshift-service"
-          },
-          "spec": {
-            "selector": {
-              "name": "hello-openshift"
-            },
-            "ports": [
-              {
-                "protocol": "TCP",
-                "port": 27017,
-                "targetPort": 8080
-              }
-            ]
-          }
+      "spec": {
+        "selector": {
+          "name": "hello-openshift"
         },
-        {
-          "kind": "Route",
-          "apiVersion": "v1beta3",
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 27017,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "hello-openshift-route"
+      },
+      "spec": {
+        "host": "hello-openshift.cloudapps.paas.it",
+        "to": {
+          "name": "hello-openshift-service"
+        },
+        "tls": {
+          "termination": "edge"
+        }
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "hello-openshift"
+      },
+      "spec": {
+        "strategy": {
+          "type": "Recreate",
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "hello-openshift"
+        },
+        "template": {
           "metadata": {
-            "name": "hello-openshift-route"
-          },
-          "spec": {
-            "host": "hello-openshift.cloudapps.paas.it",
-            "to": {
-              "name": "hello-openshift-service"
-            },
-            "tls": {
-              "termination": "edge"
+            "creationTimestamp": null,
+            "labels": {
+              "name": "hello-openshift"
             }
-          }
-        },
-        {
-          "kind": "DeploymentConfig",
-          "apiVersion": "v1beta3",
-          "metadata": {
-            "name": "hello-openshift"
           },
           "spec": {
-            "strategy": {
-              "type": "Recreate",
-              "resources": {}
-            },
-            "replicas": 1,
-            "selector": {
-              "name": "hello-openshift"
-            },
-            "template": {
-              "metadata": {
-                "creationTimestamp": null,
-                "labels": {
-                  "name": "hello-openshift"
-                }
-              },
-              "spec": {
-                "containers": [
+            "containers": [
+              {
+                "name": "hello-openshift",
+                "image": "openshift/hello-openshift:v0.4.3",
+                "ports": [
                   {
-                    "name": "hello-openshift",
-                    "image": "openshift/hello-openshift:v0.4.3",
-                    "ports": [
-                      {
-                        "name": "hello-openshift-tcp-8080",
-                        "containerPort": 8080,
-                        "protocol": "TCP"
-                      }
-                    ],
-                    "resources": {},
-                    "terminationMessagePath": "/dev/termination-log",
-                    "imagePullPolicy": "PullIfNotPresent",
-                    "capabilities": {},
-                    "securityContext": {
-                      "capabilities": {},
-                      "privileged": false
-                    },
-                    "livenessProbe": {
-                      "tcpSocket": {
-                        "port": 8080
-                      },
-                      "timeoutSeconds": 1,
-                      "initialDelaySeconds": 10
-                    }
+                    "name": "hello-openshift-tcp-8080",
+                    "containerPort": 8080,
+                    "protocol": "TCP"
                   }
                 ],
-                "restartPolicy": "Always",
-                "dnsPolicy": "ClusterFirst",
-                "serviceAccount": "",
-                "nodeSelector": {
-                  "region": "primary"
+                "resources": {
+                  "limits": {
+                    "cpu": "10m",
+                    "memory": "16Mi"
+                  }
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "IfNotPresent",
+                "capabilities": {},
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": false
+                },
+                "livenessProbe": {
+                  "tcpSocket": {
+                    "port": 8080
+                  },
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 10
                 }
               }
+            ],
+            "restartPolicy": "Always",
+            "dnsPolicy": "ClusterFirst",
+            "serviceAccount": "",
+            "nodeSelector": {
+              "region": "primary"
             }
-          },
-          "status": {
-            "latestVersion": 1
           }
         }
-      ]
+      }
     }
+  ]
+}
+```
 
 In the JSON above:
 
