@@ -656,7 +656,7 @@ And if you want to verify limits or examine usage:
     Name:                   test-quota
     Resource                Used    Hard
     --------                ----    ----
-    cpu                     0m      200m
+    cpu                     0m      400m
     memory                  0       512Mi
     pods                    0       3
     replicationcontrollers  0       3
