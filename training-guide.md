@@ -602,7 +602,7 @@ to look at some example JSON for project resource quota might look like:
       "spec": {
         "hard": {
           "memory": "512Mi",
-          "cpu": "200m",
+          "cpu": "400m",
           "pods": "3",
           "services": "3",
           "replicationcontrollers": "3",
