@@ -1512,9 +1512,9 @@ was just created.
 When we created the `demo` project, `joe` was made a project administrator. As
 an example of an administrative function, if `joe` now wants to let `alice` look
 at his project, with his project administrator rights he can add her using the
-`oadm policy` command:
+`oc policy` command:
 
-    [joe]$ oadm policy add-role-to-user view alice
+    [joe]$ oc policy add-role-to-user view alice
 
 **Note:** `oadm` will act, by default, on whatever project the user has
 selected. If you recall earlier, when we logged in as `joe` we ended up in the
