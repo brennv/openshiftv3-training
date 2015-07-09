@@ -1559,20 +1559,20 @@ the `demo` project.
 `joe` could also give `alice` the role of `edit`, which gives her access
 to do nearly anything in the project except adjust access.
 
-    [joe]$ oadm policy add-role-to-user edit alice
+    [joe]$ oc policy add-role-to-user edit alice
 
 Now she can delete that pod if she wants, but she can not add access for
 another user or upgrade her own access. To allow that, `joe` could give
 `alice` the role of `admin`, which gives her the same access as himself.
 
-    [joe]$ oadm policy add-role-to-user admin alice
+    [joe]$ oc policy add-role-to-user admin alice
 
 There is no "owner" of a project, and projects can certainly be created
 without any administrator. `alice` or `joe` can remove the `admin`
 role (or all roles) from each other or themselves at any time without
 affecting the existing project.
 
-    [joe]$ oadm policy remove-user joe
+    [joe]$ oc policy remove-user joe
 
 Check `oadm policy help` for a list of available commands to modify
 project permissions. OpenShift RBAC is extremely flexible. The roles
