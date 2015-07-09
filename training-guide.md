@@ -1381,10 +1381,12 @@ You can verify this with other `oc` commands:
     oc get services
 
     oc get routes
+    
+    oc get replicationcontroller
+    
+    oc get deploymentconfig
 
-**Note:** May need to force resize:
-
-    https://github.com/openshift/origin/issues/2939
+**Note:** If you have issues, you can view logs for the pod or run oc describe for each of the objects listed above.
 
 ### Project Status
 OpenShift provides a handy tool, `oc status`, to give you a summary of
