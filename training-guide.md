@@ -205,7 +205,7 @@ The majority of storage requirements are related to Docker and etcd (the data st
 ```
            └─2209 /usr/bin/docker -d --selinux-enabled --insecure-registry 0.0.0.0/0 -s devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/docker--vg-docker--pool -b=lbr0 --mtu=1450 --add-registry registry.access.redhat.com
 ```
-Each machine running docker has a separate local storage device `/dev/vdb` 
+Each machine running docker has a separate local storage device `/dev/vdb`
 ```
 [root@ose-master ~]# lvs -o+devices --all
   LV                  VG              Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert Devices             
@@ -213,7 +213,7 @@ Each machine running docker has a separate local storage device `/dev/vdb`
   [docker-pool_tdata] docker-vg       Twi-ao----  5.99g                                                     /dev/vdb1(3)        
   [docker-pool_tmeta] docker-vg       ewi-ao---- 12.00m                                                     /dev/vdb1(0)
 ```
- 
+
 etcd stores data in /var.  Although /var isn't configured to be a separate filesystem, there should be plenty of available space:
 
 ```
@@ -226,11 +226,11 @@ All of your VMs should be on the same logical network and be able to access one 
 
 In almost all cases, when referencing VMs you must use hostnames and the hostnames that you use must match the output of `hostname -f` on each of your nodes. Forward DNS resolution of hostnames is an **absolute requirement**. The learning environment has a pre-configured BIND (named) service running on *ose-workstation* using the following:
 
-FQDN | Static IP 
+FQDN | Static IP
 :--- |:---
-ose-workstation.paas.it | 192.168.100.5 
-ose-master.paas.it | 192.168.100.2 
-ose-node1.paas.it | 192.168.100.3 
+ose-workstation.paas.it | 192.168.100.5
+ose-master.paas.it | 192.168.100.2
+ose-node1.paas.it | 192.168.100.3
 ose-node2.paas.it | 192.168.100.4
 
 ### Using your Browser in the Learning Environment
@@ -333,7 +333,7 @@ From ose-workstation, ssh into ose-master:
 ```
 [root@ose-workstation ~]# ssh ose-master
 Last login: Tue Jun 16 14:25:29 2015 from ose-workstation.paas.it
-[root@ose-master ~]# 
+[root@ose-master ~]#
 ```
 Verify that the status of each node is **Ready**
 ```
@@ -824,7 +824,7 @@ the pod inside of it. The command should display the ID of the pod:
 
     pods/hello-openshift
 
-Issue a `get pods` to see the details of how it was defined:
+Issue a `oc get pods` to see the details of how it was defined:
 
 ```
 [joe@ose-master beta4]$ oc get pods
@@ -849,9 +849,9 @@ IP:				10.1.0.2
 ...SNIP...
 ```
 
-The pod is running on the Host given above.  Open a shell as the root user on that 
-Host and look at the list of Docker containers with `docker ps`.  This will show us 
-the bound ports.  We should see an `openshift3/ose-pod` container bound to 36061 
+The pod is running on the Host given above.  Open a shell as the root user on that
+Host and look at the list of Docker containers with `docker ps`.  This will show us
+the bound ports.  We should see an `openshift3/ose-pod` container bound to 36061
 on the host and bound to 8080 on the container, along with several other `ose-pod` containers.
 
 ```
@@ -1113,8 +1113,8 @@ router image, since the tooling defaults to upstream/origin:
 
 Adding that would be enough to allow the command to proceed, but if we want
 this router to work for our environment, we also need to specify the
-router image preloaded in the learning environment (the tooling defaults to 
-upstream/origin otherwise) and we need to supply the wildcard cert/key that 
+router image preloaded in the learning environment (the tooling defaults to
+upstream/origin otherwise) and we need to supply the wildcard cert/key that
 we created for the cloud domain.
 
     oadm router --default-cert=cloudapps.router.pem \
@@ -1381,9 +1381,9 @@ You can verify this with other `oc` commands:
     oc get services
 
     oc get routes
-    
+
     oc get replicationcontroller
-    
+
     oc get deploymentconfig
 
 **Note:** If you have issues, you can view logs for the pod or run oc describe for each of the objects listed above.
