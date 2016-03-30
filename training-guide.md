@@ -1122,13 +1122,17 @@ we created for the cloud domain.
     --selector='region=infra' \
     --images='registry.access.redhat.com/openshift3/ose-${component}:${version}'
 
+**Note:** You will have to reference the absolute path of the PEM file if you
+did not run this command in the folder where you created it.
+
 If this works, you'll see some output:
 
+    password for stats user admin has been set to <password>
     services/router
     deploymentConfigs/router
 
-**Note:** You will have to reference the absolute path of the PEM file if you
-did not run this command in the folder where you created it.
+**Note:** Make note of this password, you will need it to review router stats in
+the next section. 
 
 Let's check the pods:
 
@@ -1188,9 +1192,8 @@ multiple, clustered router instances. We will describe this later.
 
 ### Viewing Router Stats
 Haproxy provides a stats page that's visible on port 1936 of your router host.
-Currently the stats page is password protected with a static password, this
-password will be generated using a template parameter in the future, for now the
-password is `cEVu2hUb` and the username is `admin`.
+The stats page is password protected with the password generated upon router
+creation. The username is `admin`.
 
 To make this acessible publicly, you will need to open this port on your master:
 
@@ -1207,9 +1210,9 @@ you only want it accessible via port fowarding, etc.
 such it's really intended to be viewed by cluster admins rather than project
 admins.
 
-Ensure that port 1936 is accessible and visit:
+Ensure that port 1936 is accessible, substitute the password generated upon router creation and visit:
 
-    http://admin:cEVu2hUb@ose-master.paas.it:1936
+    http://admin:<password>@ose-master.paas.it:1936
 
 to view your router stats.
 
